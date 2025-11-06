@@ -1,45 +1,62 @@
 using Firmeza.Domain.Entities;
 using Firmeza.Domain.Interfaces;
-using Firmeza.Infrastructure.Persistence;
+using Firmeza.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Firmeza.Infrastructure.Repositories;
-
-    // Concrete repository for products
-public class ProductRepository : IProductRepository
-{
-    private readonly ApplicationDbContext _context;
-
-    public ProductRepository(ApplicationDbContext context)
+    /// <summary>
+    /// Concrete repository implementation for managing Product entities.
+    /// Provides CRUD operations using Entity Framework Core.
+    /// </summary>
+    public class ProductRepository : IProductRepository
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _context;
 
-    public IEnumerable<Product> GetAll()
-    {
-        return _context.Products.AsNoTracking().ToList();
-    }
+        public ProductRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
-    public Product? GetById(int id)
-    {
-        return _context.Products.Find(id);
-    }
+        /// <summary>
+        /// Retrieves all products from the database (read-only).
+        /// </summary>
+        public async Task<IEnumerable<Product>> GetAllAsync()
+        {
+            return await _context.Products.AsNoTracking().ToListAsync();
+        }
 
-    public void Add(Product product)
-    {
-        _context.Products.Add(product);
-        _context.SaveChanges();
-    }
+        /// <summary>
+        /// Finds a product by its unique identifier.
+        /// </summary>
+        public async Task<Product?> GetByIdAsync(int id)
+        {
+            return await _context.Products.FindAsync(id);
+        }
 
-    public void Update(Product product)
-    {
-        _context.Products.Update(product);
-        _context.SaveChanges();
-    }
+        /// <summary>
+        /// Adds a new product to the database.
+        /// </summary>
+        public async Task AddAsync(Product product)
+        {
+            await _context.Products.AddAsync(product);
+            // El guardado se delega al Unit of Work
+        }
 
-    public void Delete(Product product)
-    {
-        _context.Products.Remove(product);
-        _context.SaveChanges();
+        /// <summary>
+        /// Updates an existing product.
+        /// </summary>
+        public async Task UpdateAsync(Product product)
+        {
+            _context.Products.Update(product);
+            await Task.CompletedTask; // Se mantiene async, pero no guarda
+        }
+
+        /// <summary>
+        /// Deletes a product from the database.
+        /// </summary>
+        public async Task DeleteAsync(Product product)
+        {
+            _context.Products.Remove(product);
+            await Task.CompletedTask; // Se mantiene async, pero no guarda
+        }
     }
-}
