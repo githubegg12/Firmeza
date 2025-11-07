@@ -34,8 +34,8 @@ builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 // Authorization policies 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("RequireClientRole", policy => policy.RequireRole("Client"));
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Administrador"));
+    options.AddPolicy("RequireClientRole", policy => policy.RequireRole("Cliente"));
 });
 
 // Configure redirections for Identity

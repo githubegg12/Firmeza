@@ -4,32 +4,24 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+      <!--
+        El proyecto Web no necesita referencias directas a EF Core, Npgsql o Identity.
+        Su única responsabilidad es la presentación. Obtiene los servicios que necesita
+        a través de las referencias a los proyectos de Application e Infrastructure.
+      -->
+      <PackageReference Include="EPPlus" Version="7.1.2" />
+      <PackageReference Include="QuestPDF" Version="2023.12.6" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="EPPlus" Version="8.2.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.21" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-      <PackageReference Include="QuestPDF" Version="2025.7.3" />
-    </ItemGroup>
-
-    <ItemGroup>
+      <!--
+        Se añaden las referencias a los proyectos de las capas inferiores para poder
+        inyectar y utilizar sus servicios.
+      -->
+      <ProjectReference Include="..\Firmeza.Application\Firmeza.Application.csproj" />
       <ProjectReference Include="..\Firmeza.Infrastructure\Firmeza.Infrastructure.csproj" />
     </ItemGroup>
 
