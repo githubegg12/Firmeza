@@ -1,44 +1,41 @@
 using Firmeza.Application.DTOs;
 using Firmeza.Application.Interfaces;
 using Firmeza.Domain.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Firmeza.Application.Services;
 
-public class ProductService : IProductService
+// Service for reading product data
+public class ReadProductService : IReadProductService
 {
-    private readonly IProductRepository _productRepository;
+    private readonly IProductRepository _repo;
 
-    public ProductService(IProductRepository productRepository)
+    // Constructor injection of repository
+    public ReadProductService(IProductRepository repo)
     {
-        _productRepository = productRepository;
+        _repo = repo;
     }
 
-    // Traer todos los productos
+    // Get all products and map to DTOs
     public async Task<IEnumerable<ProductDto>> GetAllProducts()
     {
-        var products = await _productRepository.GetAllAsync();
-
+        var products = await _repo.GetAllAsync(); // Fetch all products
         return products.Select(p => new ProductDto
         {
             Id = p.Id,
             Name = p.Name,
             Description = p.Description,
             Category = p.Category,
-            ImageUrl = p.ImageUrl,
             Price = p.Price,
-            Stock = p.Stock
+            Stock = p.Stock,
+            ImageUrl = p.ImageUrl
         });
     }
 
-    // Traer un producto por Id
+    // Get a single product by Id and map to DTO
     public async Task<ProductDto?> GetProductById(int id)
     {
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product == null) return null;
+        var product = await _repo.GetByIdAsync(id); // Fetch product by Id
+        if (product == null) return null; // Return null if not found
 
         return new ProductDto
         {
@@ -46,9 +43,9 @@ public class ProductService : IProductService
             Name = product.Name,
             Description = product.Description,
             Category = product.Category,
-            ImageUrl = product.ImageUrl,
             Price = product.Price,
-            Stock = product.Stock
+            Stock = product.Stock,
+            ImageUrl = product.ImageUrl
         };
     }
 }

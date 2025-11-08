@@ -1,6 +1,6 @@
 namespace Firmeza.Application.DTOs;
 
-// DTO for transferring product data
+// DTO for transferring product data from server to client
 public class ProductDto
 {
     public int Id { get; set; } 
