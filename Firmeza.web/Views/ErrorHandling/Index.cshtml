@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Age Validator";
+}
+
+<h2>@ViewData["Title"]</h2>
+<p>Please enter your age below.</p>
+
+<!-- The form will POST to the ProcessAge action in the ErrorHandlingController -->
+<form asp-controller="ErrorHandling" asp-action="ProcessAge" method="post">
+    <div>
+        <label for="ageInput">Your Age:</label>
+        <input type="text" id="ageInput" name="ageInput" />
+    </div>
+    <button type="submit">Submit</button>
+</form>
+
+<hr />
+
+<!-- Display success or error messages here -->
+@if (ViewBag.Message != null)
+{
+    <div style="color: green;">
+        <p>@ViewBag.Message</p>
+    </div>
+}
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div style="color: red;">
+        <p>@ViewBag.ErrorMessage</p>
+    </div>
+}
+
+<hr />
+
+<h3>Alternative using TryParse (Recommended)</h3>
+<p>
+    While the example above uses <code>try-catch</code> as requested, a more efficient and common way to handle this in C# is with <code>int.TryParse()</code>. 
+    It doesn't throw an exception on failure, which is better for performance when handling expected user input errors.
+</p>
+<pre>
+<code>
+// Controller code using TryParse
+if (int.TryParse(ageInput, out int age))
+{
+    // Success
+    ViewBag.Message = $"Thank you! Your age is: {age}";
+}
+else
+{
+    // Failure
+    ViewBag.ErrorMessage = "Invalid input. Please enter a valid whole number for your age.";
+}
+</code>
+</pre>
