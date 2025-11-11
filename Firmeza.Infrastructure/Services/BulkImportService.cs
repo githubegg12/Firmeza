@@ -87,8 +87,8 @@ namespace Firmeza.Infrastructure.Services
                     var sale = new Sale
                     {
                         Client = client,
-                        Date = DateTime.TryParse(saleDateStr, out var saleDate) ? saleDate : DateTime.Now,
-                        Total = quantity * unitPrice
+                        SaleDate = DateTime.TryParse(saleDateStr, out var saleDate) ? saleDate : DateTime.Now,
+                        TotalAmount = quantity * unitPrice
                     };
                     
                     var saleDetail = new SaleDetail

@@ -6,9 +6,21 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<div class="row">
+    <div class="col-md-6">
+        <p>
+            <a asp-action="Create">Create New</a>
+        </p>
+    </div>
+    <div class="col-md-6 text-end">
+        <p>
+            <strong>Export:</strong>
+            <a asp-action="ExportToExcel">Excel</a> |
+            <a asp-action="ExportToPdf">PDF</a>
+        </p>
+    </div>
+</div>
+
 
 <form asp-action="Index" method="get">
     <div class="form-actions no-color">

@@ -33,7 +33,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser> // <-- ¡
 
         builder.Entity<SaleDetail>()
             .HasOne(sd => sd.Sale)
-            .WithMany(s => s.Details)
+            .WithMany(s => s.SaleDetails)
             .HasForeignKey(sd => sd.SaleId);
 
         builder.Entity<SaleDetail>()

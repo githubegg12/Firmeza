@@ -32,6 +32,7 @@ public static class DependencyInjection
 
         // Register custom services
         services.AddScoped<IBulkImportService, BulkImportService>();
+        services.AddScoped<IPdfService, PdfService>(); // Register the new PDF service
 
         return services;
     }

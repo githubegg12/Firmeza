@@ -23,7 +23,7 @@ namespace Firmeza.Infrastructure.Repositories
         {
             return await _context.Sales
                 .Include(s => s.Client)
-                .Include(s => s.Details)
+                .Include(s => s.SaleDetails)
                 .ThenInclude(d => d.Product)
                 .AsNoTracking()
                 .ToListAsync();
@@ -33,7 +33,7 @@ namespace Firmeza.Infrastructure.Repositories
         {
             return await _context.Sales
                 .Include(s => s.Client)
-                .Include(s => s.Details)
+                .Include(s => s.SaleDetails)
                 .ThenInclude(d => d.Product)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }

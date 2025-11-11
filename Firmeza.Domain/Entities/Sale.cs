@@ -1,20 +1,19 @@
-namespace Firmeza.Domain.Entities;
+using System;
+using System.Collections.Generic;
 
-/// <summary>
-/// Represents a sale transaction made to a client.
-/// </summary>
-public class Sale
+namespace Firmeza.Domain.Entities
 {
-    public int Id { get; set; } // Primary key
-    public DateTime Date { get; set; } = DateTime.UtcNow;
-    public decimal Subtotal { get; set; }
-    public decimal Tax { get; set; }
-    public decimal Total { get; set; }
+    public class Sale
+    {
+        public int Id { get; set; }
+        public DateTime SaleDate { get; set; }
+        public int ClientId { get; set; }
+        public Client Client { get; set; }
+        public decimal TotalAmount { get; set; }
 
-    // Foreign key to Client
-    public int ClientId { get; set; }
-    public Client? Client { get; set; }
+        // New property to store the path to the generated PDF receipt.
+        public string? ReceiptUrl { get; set; }
 
-    // Navigation property - each sale has multiple details
-    public ICollection<SaleDetail> Details { get; set; } = new List<SaleDetail>();
+        public ICollection<SaleDetail> SaleDetails { get; set; } = new List<SaleDetail>();
+    }
 }
