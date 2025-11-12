@@ -1,51 +1,9 @@
-@model Firmeza.web.Models.DashboardViewModel
-
 @{
-    ViewData["Title"] = "Dashboard";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<h2>Panel de Administración</h2>
+<p>Bienvenido al panel de administración. Aquí irán las métricas y acciones de administración.</p>
+<form method="post" asp-controller="Account" asp-action="Logout">
+    <button type="submit">Cerrar sesión</button>
+</form>
 
-<div class="container-fluid">
-    <h1 class="mb-4">Dashboard</h1>
-
-    <div class="row">
-        <!-- Total Productos Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card text-white bg-primary h-100">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Total Productos</h5>
-                        <p class="card-text fs-2">@Model.TotalProducts</p>
-                    </div>
-                    <i class="bi bi-box-seam-fill" style="font-size: 3rem; opacity: 0.5;"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Clientes Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card text-white bg-success h-100">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Total Clientes</h5>
-                        <p class="card-text fs-2">@Model.TotalClients</p>
-                    </div>
-                    <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.5;"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Ventas Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card text-white bg-info h-100">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Total Ventas</h5>
-                        <p class="card-text fs-2">@Model.TotalSales</p>
-                    </div>
-                    <i class="bi bi-receipt-cutoff" style="font-size: 3rem; opacity: 0.5;"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>

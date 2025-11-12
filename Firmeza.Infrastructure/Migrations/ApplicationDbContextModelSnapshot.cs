@@ -17,7 +17,7 @@ namespace Firmeza.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -173,16 +173,13 @@ namespace Firmeza.Infrastructure.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<string>("ReceiptUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SaleDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Tax")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Total")
+                    b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
 
                     b.HasKey("Id");
@@ -382,7 +379,7 @@ namespace Firmeza.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Firmeza.Domain.Entities.Sale", "Sale")
-                        .WithMany("Details")
+                        .WithMany("SaleDetails")
                         .HasForeignKey("SaleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -455,7 +452,7 @@ namespace Firmeza.Infrastructure.Migrations
 
             modelBuilder.Entity("Firmeza.Domain.Entities.Sale", b =>
                 {
-                    b.Navigation("Details");
+                    b.Navigation("SaleDetails");
                 });
 #pragma warning restore 612, 618
         }

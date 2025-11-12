@@ -1,0 +1,46 @@
+@model IEnumerable<Firmeza.Domain.Entities.Client>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Clientes</h2>
+<p>
+    <a asp-controller="Client" asp-action="Create">Crear nuevo cliente</a> |
+    <a asp-controller="Client" asp-action="ExportToExcel">Exportar a Excel</a> |
+    <a asp-controller="Client" asp-action="ExportToPdf">Exportar a PDF</a>
+</p>
+<form method="get" asp-action="Index" asp-controller="Client">
+    <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" placeholder="Buscar por nombre o documento" />
+    <button type="submit">Buscar</button>
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Documento</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model != null)
+    {
+        foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>@item.Document</td>
+                <td>@item.Email</td>
+                <td>@item.Phone</td>
+                <td>
+                    <a asp-controller="Client" asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
+                    <a asp-controller="Client" asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+

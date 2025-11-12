@@ -1,19 +1,20 @@
+using Firmeza.Application.Interfaces; // Will use the interface from the Application layer
 using Firmeza.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Firmeza.Infrastructure.Data
 {
-    /// <summary>
-    /// Initializes the database with roles and an admin user.
-    /// </summary>
     public class DbInitializer : IDbInitializer
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager; // CORRECTED: Using the correct 'User' entity
         private readonly RoleManager<IdentityRole> _roleManager;
 
-        public DbInitializer(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public DbInitializer(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager, // CORRECTED
+            RoleManager<IdentityRole> roleManager)
         {
             _context = context;
             _userManager = userManager;
@@ -22,39 +23,37 @@ namespace Firmeza.Infrastructure.Data
 
         public async Task InitializeAsync()
         {
-            // Apply pending migrations
             if ((await _context.Database.GetPendingMigrationsAsync()).Any())
             {
                 await _context.Database.MigrateAsync();
             }
 
-            // Seed roles
-            if (!await _roleManager.RoleExistsAsync("Admin"))
-                await _roleManager.CreateAsync(new IdentityRole("Admin"));
-
-            if (!await _roleManager.RoleExistsAsync("Client"))
-                await _roleManager.CreateAsync(new IdentityRole("Client"));
-
-            // Seed admin user
-            var adminEmail = "admin@firmeza.com";
-            var adminUser = await _userManager.FindByEmailAsync(adminEmail);
-
-            if (adminUser == null)
+            if (!await _roleManager.RoleExistsAsync("Administrador"))
             {
-                adminUser = new ApplicationUser
+                await _roleManager.CreateAsync(new IdentityRole("Administrador"));
+            }
+            if (!await _roleManager.RoleExistsAsync("Cliente"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Cliente"));
+            }
+
+            var adminEmail = "admin@firmeza.com";
+            if (await _userManager.FindByEmailAsync(adminEmail) == null)
+            {
+                var adminUser = new ApplicationUser // CORRECTED: Using the correct 'User' entity
                 {
-                    UserName = "admin",
+                    UserName = adminEmail,
                     Email = adminEmail,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
                 };
-                await _userManager.CreateAsync(adminUser, "Admin123!");
-                await _userManager.AddToRoleAsync(adminUser, "Admin");
+
+                var result = await _userManager.CreateAsync(adminUser, "Admin123*");
+
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(adminUser, "Administrador");
+                }
             }
         }
-    }
-
-    public interface IDbInitializer
-    {
-        Task InitializeAsync();
     }
 }

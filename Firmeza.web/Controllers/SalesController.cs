@@ -3,8 +3,7 @@ using Firmeza.Domain.Entities;
 using Firmeza.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace Firmeza.web.Controllers
 {

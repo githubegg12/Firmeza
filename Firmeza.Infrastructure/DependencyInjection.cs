@@ -17,22 +17,48 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
+        // -------------------------
+        // Configure DbContext
+        // -------------------------
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
 
+        // -------------------------
+        // Configure Identity with options
+        // -------------------------
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
+                // SignIn options
                 options.SignIn.RequireConfirmedAccount = false;
-            })
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
 
+                // Password options
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = false;
+                options.Password.RequiredLength = 6;
+
+                // Lockout, user, etc., can also be configured here if needed
+            })
+            .AddRoles<IdentityRole>() // Enable roles
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders(); // Important for password reset, email confirmation, etc.
+
+        // -------------------------
         // Register repositories
+        // -------------------------
         services.AddScoped<IProductRepository, ProductRepository>();
 
+        // -------------------------
         // Register custom services
+        // -------------------------
         services.AddScoped<IBulkImportService, BulkImportService>();
-        services.AddScoped<IPdfService, PdfService>(); // Register the new PDF service
+        services.AddScoped<IPdfService, PdfService>();
+
+        // -------------------------
+        // Register Authentication service
+        // Encapsulates Identity logic for Application layer
+        // -------------------------
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }

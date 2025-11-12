@@ -1,0 +1,27 @@
+@model Firmeza.web.ViewModels.LoginViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Iniciar sesión</h2>
+<form method="post" asp-controller="Account" asp-action="Login">
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div>
+        <label asp-for="Username"></label>
+        <input asp-for="Username" />
+        <span asp-validation-for="Username"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <div>
+        <label asp-for="RememberMe"></label>
+        <input asp-for="RememberMe" type="checkbox" />
+    </div>
+    <button type="submit">Entrar</button>
+</form>
+<p>
+    <a asp-controller="Account" asp-action="Register">Registrarse</a>
+</p>
+

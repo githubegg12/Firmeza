@@ -9,11 +9,11 @@ using QuestPDF.Infrastructure;
 
 namespace Firmeza.web.Controllers
 {
-    public class ClientsController : Controller
+    public class ClientController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ClientsController(ApplicationDbContext context)
+        public ClientController(ApplicationDbContext context)
         {
             _context = context;
         }

@@ -8,19 +8,24 @@
 
     <ItemGroup>
       <!--
-        El proyecto Web no necesita referencias directas a EF Core, Npgsql o Identity.
-        Su única responsabilidad es la presentación. Obtiene los servicios que necesita
-        a través de las referencias a los proyectos de Application e Infrastructure.
+        The Web project should only reference presentation-layer packages.
+        EF Core and Identity packages are infrastructure concerns.
       -->
       <PackageReference Include="EPPlus" Version="7.1.2" />
       <PackageReference Include="QuestPDF" Version="2023.12.6" />
+
+      <!--
+        This package is required ONLY for the 'dotnet ef' command-line tools to work
+        when this project is used as the startup project. It's a design-time dependency.
+      -->
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.6">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-      <!--
-        Se añaden las referencias a los proyectos de las capas inferiores para poder
-        inyectar y utilizar sus servicios.
-      -->
+      <!-- Project references to lower layers -->
       <ProjectReference Include="..\Firmeza.Application\Firmeza.Application.csproj" />
       <ProjectReference Include="..\Firmeza.Infrastructure\Firmeza.Infrastructure.csproj" />
     </ItemGroup>

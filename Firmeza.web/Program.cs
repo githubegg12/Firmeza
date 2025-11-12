@@ -1,57 +1,35 @@
-using Firmeza.Domain.Entities;
-using Firmeza.Infrastructure.Data;
-using Firmeza.web.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Firmeza.Application.Interfaces; // Needed for IDbInitializer
+using Firmeza.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- 1. Service Registration ---
+
+// builder.Services.AddApplication(); // Not needed yet.
+
+// This line is KEY: It registers DbContext, Identity, Repositories, and our DbInitializer.
+builder.Services.AddInfrastructure(builder.Configuration); 
+
 builder.Services.AddControllersWithViews();
-// Add Razor Pages
 builder.Services.AddRazorPages();
 
-// Configure DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configure Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.Password.RequireDigit = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = false;
-        options.Password.RequiredLength = 6;
-    })
-    .AddRoles<IdentityRole>() // Enable roles
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders(); // Important for email confirmation, password reset, etc.
-
-// Register DbInitializer
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-
-// Authorization policies 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Administrador"));
-    options.AddPolicy("RequireClientRole", policy => policy.RequireRole("Cliente"));
-});
-
-// Configure redirections for Identity
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Identity/Account/Login";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- 2. HTTP Request Pipeline Configuration ---
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -59,32 +37,37 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// Authentication & Authorization
-app.UseAuthentication();
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// Map Razor Pages
 app.MapRazorPages();
 
-// --- Creation of Roles and Admin User on Startup ---
-// This ensures that the "Administrator" and "Client" roles exist in the database.
-using (var scope = app.Services.CreateScope())
+// --- 3. Database Initialization ---
+await SeedDatabaseAsync(app);
+
+// --- 4. Run the Application ---
+app.Run();
+
+
+// --- Helper Method for Seeding ---
+async Task SeedDatabaseAsync(IHost host)
 {
-    var services = scope.ServiceProvider;
-    try
+    using (var scope = host.Services.CreateScope())
     {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        await SeedRoles.EnsureRolesAsync(roleManager);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the roles.");
+        var services = scope.ServiceProvider;
+        try
+        {
+            var dbInitializer = services.GetRequiredService<IDbInitializer>();
+            // CORRECTED: Calling the method with its proper async name.
+            await dbInitializer.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred during database initialization.");
+        }
     }
 }
-
-app.Run();
