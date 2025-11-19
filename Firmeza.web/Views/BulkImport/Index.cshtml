@@ -1,66 +1,36 @@
-@model Firmeza.Application.DTOs.BulkImportResultDto
-
 @{
-    ViewData["Title"] = "Bulk Data Import";
+    ViewData["Title"] = "BulkImport";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container mt-5">
+    <h1>@ViewData["Title"]</h1>
+    <p>Importa datos masivos desde un archivo Excel.</p>
 
-<p>
-    Upload an Excel (.xlsx) file with denormalized data. The system will automatically read,
-    normalize, validate, and import the information into the correct tables.
-</p>
-
-<hr />
-
-<form asp-action="Upload" method="post" enctype="multipart/form-data">
-    <div class="form-group">
-        <label for="excelFile">Select Excel File</label>
-        <input type="file" name="excelFile" class="form-control" accept=".xlsx" />
-    </div>
-    <button type="submit" class="btn btn-primary mt-3">Upload and Process</button>
-</form>
-
-@if (ViewBag.Error != null)
-{
-    <div class="alert alert-danger mt-4">
-        <strong>Error:</strong> @ViewBag.Error
-    </div>
-}
-
-<!-- Section to display the import results -->
-@if (Model != null)
-{
-    <div class="mt-4">
-        <h3>Import Results</h3>
-        <hr />
-        <div class="row">
-            <div class="col-md-6">
-                <h4>Summary</h4>
-                <ul>
-                    <li><strong>Total Rows in File:</strong> @Model.TotalRows</li>
-                    <li><strong>Rows Processed:</strong> @Model.ProcessedRows</li>
-                    <li class="text-success"><strong>Successful Inserts:</strong> @Model.SuccessfulInserts</li>
-                    <li class="text-info"><strong>Successful Updates:</strong> @Model.SuccessfulUpdates</li>
-                    <li class="text-danger"><strong>Failed Rows:</strong> @Model.FailedRows</li>
-                </ul>
-            </div>
-            <div class="col-md-6">
-                <h4>Detailed Log</h4>
-                @if (Model.LogMessages.Any())
-                {
-                    <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #f5f5f5;">
-                        @foreach (var log in Model.LogMessages)
-                        {
-                            <p>@log</p>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p>No log messages.</p>
-                }
-            </div>
+    @if (Model != null)
+    {
+        <div class="alert alert-info">
+            <h4>Resultado de la importación:</h4>
+            <p>Total de filas: @Model.TotalRows</p>
+            <p>Insertadas exitosamente: @Model.SuccessfulInserts</p>
+            <p>Actualizadas exitosamente: @Model.SuccessfulUpdates</p>
+            <p>Filas fallidas: @Model.FailedRows</p>
         </div>
-    </div>
-}
+
+        <h5>Mensajes de log:</h5>
+        <ul class="list-group">
+            @foreach (var message in Model.LogMessages)
+            {
+                <li class="list-group-item">@message</li>
+            }
+        </ul>
+    }
+
+    <form method="post" enctype="multipart/form-data" class="mt-4">
+        <div class="form-group">
+            <label for="excelFile">Selecciona archivo Excel:</label>
+            <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx,.xls" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Importar</button>
+    </form>
+</div>
+

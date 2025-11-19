@@ -6,7 +6,6 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <!-- CORRECTED: Added FrameworkReference to grant access to ASP.NET Core APIs like IWebHostEnvironment -->
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
@@ -14,10 +13,11 @@
     <ItemGroup>
       <ProjectReference Include="..\Firmeza.Application\Firmeza.Application.csproj" />
       <ProjectReference Include="..\Firmeza.Domain\Firmeza.Domain.csproj" />
+      <ProjectReference Include="..\Firmeza.Identity\Firmeza.Identity.csproj" />
+      <!-- CORRECTED: Removed the circular dependency to Firmeza.Identity -->
     </ItemGroup>
 
     <ItemGroup>
-      <!-- Package references are standardized to stable .NET 8 versions -->
       <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.6" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
@@ -32,8 +32,6 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
-      
-      <!-- CORRECTED: Standardized QuestPDF and EPPlus references -->
       <PackageReference Include="QuestPDF" Version="2023.12.6" />
       <PackageReference Include="EPPlus" Version="7.1.2" />
     </ItemGroup>

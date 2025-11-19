@@ -1,9 +1,8 @@
-using Firmeza.Application.Interfaces;
+using Firmeza.Application.Features.Pdf;
 using Firmeza.Domain.Entities;
 using Firmeza.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 
 namespace Firmeza.web.Controllers
 {
@@ -18,17 +17,43 @@ namespace Firmeza.web.Controllers
             _pdfService = pdfService;
         }
 
-        // A simple GET action to list sales
+        // GET: Sales
         public async Task<IActionResult> Index()
         {
             var sales = await _context.Sales.Include(s => s.Client).ToListAsync();
             return View(sales);
         }
 
-        // This is a simplified Create method for demonstration.
-        // In a real app, this would take a ViewModel from a form.
+        // GET: Sales/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var sale = await _context.Sales
+                .Include(s => s.Client)
+                .Include(s => s.SaleDetails)
+                .ThenInclude(sd => sd.Product)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (sale == null)
+                return NotFound();
+
+            return View(sale);
+        }
+
+        // GET: Sales/Create
+        public async Task<IActionResult> Create()
+        {
+            ViewData["Clients"] = await _context.Clients.ToListAsync();
+            ViewData["Products"] = await _context.Products.ToListAsync();
+            return View();
+        }
+
+        // POST: Sales/Create
         [HttpPost]
-        public async Task<IActionResult> CreateSale(int clientId, int productId, int quantity)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(int clientId, int productId, int quantity)
         {
             var client = await _context.Clients.FindAsync(clientId);
             var product = await _context.Products.FindAsync(productId);
@@ -38,11 +63,10 @@ namespace Firmeza.web.Controllers
                 return BadRequest("Invalid client, product, or quantity.");
             }
 
-            // 1. Create the Sale and SaleDetail
             var sale = new Sale
             {
                 Client = client,
-                SaleDate = System.DateTime.Now,
+                SaleDate = DateTime.Now,
                 TotalAmount = product.Price * quantity,
                 SaleDetails = new[]
                 {
@@ -51,27 +75,57 @@ namespace Firmeza.web.Controllers
             };
 
             _context.Sales.Add(sale);
-            await _context.SaveChangesAsync(); // First save to get a Sale.Id
-
-            // 2. Generate the PDF receipt
-            // We need to reload the sale with its navigation properties for the PDF service
-            var saleForPdf = await _context.Sales
-                .Include(s => s.Client)
-                .Include(s => s.SaleDetails)
-                .ThenInclude(sd => sd.Product)
-                .FirstOrDefaultAsync(s => s.Id == sale.Id);
-
-            if (saleForPdf != null)
-            {
-                var receiptUrl = await _pdfService.GenerateSaleReceiptAsync(saleForPdf);
-
-                // 3. Update the sale with the receipt URL
-                sale.ReceiptUrl = receiptUrl;
-                _context.Sales.Update(sale);
-                await _context.SaveChangesAsync(); // Second save to store the URL
-            }
+            await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }
+
+        // GET: Sales/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var sale = await _context.Sales
+                .Include(s => s.Client)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (sale == null)
+                return NotFound();
+
+            return View(sale);
+        }
+
+        // POST: Sales/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var sale = await _context.Sales.FindAsync(id);
+            if (sale != null)
+            {
+                _context.Sales.Remove(sale);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Export Sale to PDF
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf(int id)
+        {
+            var sale = await _context.Sales
+                .Include(s => s.Client)
+                .Include(s => s.SaleDetails)
+                .ThenInclude(sd => sd.Product)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (sale == null)
+                return NotFound();
+
+            var pdfBytes = await _pdfService.GenerateSalePdfAsync(sale);
+            return File(pdfBytes, "application/pdf", $"Sale_{sale.Id}.pdf");
+        }
     }
 }
+

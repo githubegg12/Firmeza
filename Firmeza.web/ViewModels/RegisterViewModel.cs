@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Firmeza.web.ViewModels;
 
+/// <summary>
+/// View model for user registration
+/// </summary>
 public class RegisterViewModel
 {
     [Required]
@@ -17,10 +20,11 @@ public class RegisterViewModel
 
     [Required]
     [DataType(DataType.Password)]
-    [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
+    [Compare("Password", ErrorMessage = "Passwords do not match")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    // Opción para asignar rol en registros administrados (por defecto Cliente)
+    /// <summary>
+    /// Optional role assignment (defaults to Cliente if not provided)
+    /// </summary>
     public string? Role { get; set; }
 }
-

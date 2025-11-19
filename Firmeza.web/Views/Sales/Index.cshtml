@@ -4,56 +4,87 @@
     ViewData["Title"] = "Sales";
 }
 
-<h1>Sales</h1>
+<div class="container mt-5">
+    <h1>@ViewData["Title"]</h1>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Client</th>
-            <th>Date</th>
-            <th>Total Amount</th>
-            <th>Receipt</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Id</td>
-                <td>@item.Client.Name</td>
-                <td>@item.SaleDate.ToShortDateString()</td>
-                <td>@item.TotalAmount.ToString("C")</td>
-                <td>
-                    @if (!string.IsNullOrEmpty(item.ReceiptUrl))
-                    {
-                        <a href="@item.ReceiptUrl" target="_blank">Download Receipt</a>
-                    }
-                    else
-                    {
-                        <span>No receipt</span>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+    <a href="/Sales/Create" class="btn btn-primary mb-3">Nueva Venta</a>
 
-<!-- Simple form to test sale creation -->
-<hr />
-<h4>Create Test Sale</h4>
-<form asp-action="CreateSale" method="post">
-    <div class="form-group">
-        <label>Client ID:</label>
-        <input type="number" name="clientId" value="1" class="form-control" />
+    @if (Model.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sale in Model)
+                {
+                    <tr>
+                        <td>@sale.Id</td>
+                        <td>@sale.Client?.Name</td>
+                        <td>@sale.SaleDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>$@sale.TotalAmount.ToString("F2")</td>
+                        <td>
+                            <a href="/Sales/Details/@sale.Id" class="btn btn-info btn-sm">Ver</a>
+                            <a href="/Sales/Delete/@sale.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                            <a href="/Sales/ExportToPdf/@sale.Id" class="btn btn-warning btn-sm">PDF</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No hay ventas registradas.</p>
+    }
+</div>
+@{
+    ViewData["Title"] = "Admin Panel";
+}
+
+<div class="container mt-5">
+    <h1>@ViewData["Title"]</h1>
+    <p>Bienvenido al panel de administrador.</p>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Clientes</h5>
+                    <a href="/Client/Index" class="btn btn-primary">Ver Clientes</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Productos</h5>
+                    <a href="/Products/Index" class="btn btn-primary">Ver Productos</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Ventas</h5>
+                    <a href="/Sales/Index" class="btn btn-primary">Ver Ventas</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Importar</h5>
+                    <a href="/BulkImport/Index" class="btn btn-primary">Importar Masivo</a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-        <label>Product ID:</label>
-        <input type="number" name="productId" value="1" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label>Quantity:</label>
-        <input type="number" name="quantity" value="5" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary mt-2">Create Sale</button>
-</form>
+</div>
+

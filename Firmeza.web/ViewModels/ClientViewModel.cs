@@ -1,32 +1,26 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Firmeza.web.ViewModels
+namespace Firmeza.web.ViewModels;
+
+/// <summary>
+/// View model for client management operations
+/// </summary>
+public class ClientViewModel
 {
-    public class ClientViewModel
-    {
-        public int Id { get; set; }
+    public int Id { get; set; }
 
-        [Required(ErrorMessage = "Client name is required.")]
-        [StringLength(100)]
-        [Display(Name = "Full Name or Company Name")]
-        public string Name { get; set; }
+    [Required]
+    public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Document ID is required.")]
-        [StringLength(20, ErrorMessage = "Document ID cannot be longer than 20 characters.")]
-        [Display(Name = "Document ID (NIT, DNI, etc.)")]
-        public string Document { get; set; }
+    [Required]
+    public string Document { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email address.")]
-        [StringLength(100)]
-        public string Email { get; set; }
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Invalid phone number.")]
-        [StringLength(20)]
-        public string Phone { get; set; }
+    public string? Phone { get; set; }
 
-        [Required(ErrorMessage = "Address is required.")]
-        [StringLength(200)]
-        public string Address { get; set; }
-    }
+    [Required]
+    public string Address { get; set; } = string.Empty;
 }

@@ -1,10 +1,10 @@
 using Firmeza.Infrastructure.Data;
-using Firmeza.Domain.Entities;
 using Firmeza.web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace Firmeza.web.Controllers
@@ -44,7 +44,7 @@ namespace Firmeza.web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var client = new Client
+                var client = new Domain.Entities.Client
                 {
                     Name = viewModel.Name,
                     Document = viewModel.Document,
@@ -52,6 +52,7 @@ namespace Firmeza.web.Controllers
                     Phone = viewModel.Phone,
                     Address = viewModel.Address
                 };
+
                 _context.Add(client);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -62,9 +63,12 @@ namespace Firmeza.web.Controllers
         // GET: Clients/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
+
             var client = await _context.Clients.FindAsync(id);
-            if (client == null) return NotFound();
+            if (client == null)
+                return NotFound();
 
             var viewModel = new ClientViewModel
             {
@@ -75,6 +79,7 @@ namespace Firmeza.web.Controllers
                 Phone = client.Phone,
                 Address = client.Address
             };
+
             return View(viewModel);
         }
 
@@ -83,14 +88,16 @@ namespace Firmeza.web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, ClientViewModel viewModel)
         {
-            if (id != viewModel.Id) return NotFound();
+            if (id != viewModel.Id)
+                return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
                     var client = await _context.Clients.FindAsync(id);
-                    if (client == null) return NotFound();
+                    if (client == null)
+                        return NotFound();
 
                     client.Name = viewModel.Name;
                     client.Document = viewModel.Document;
@@ -103,8 +110,9 @@ namespace Firmeza.web.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_context.Clients.Any(e => e.Id == viewModel.Id)) return NotFound();
-                    else throw;
+                    if (!ClientExists(viewModel.Id))
+                        return NotFound();
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -114,9 +122,13 @@ namespace Firmeza.web.Controllers
         // GET: Clients/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
+
             var client = await _context.Clients.FirstOrDefaultAsync(m => m.Id == id);
-            if (client == null) return NotFound();
+            if (client == null)
+                return NotFound();
+
             return View(client);
         }
 
@@ -134,94 +146,93 @@ namespace Firmeza.web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        #region Export Actions
+        private bool ClientExists(int id)
+        {
+            return _context.Clients.Any(e => e.Id == id);
+        }
 
-        // GET: Clients/ExportToExcel
+        // Export to Excel
+        [HttpGet]
         public async Task<IActionResult> ExportToExcel()
         {
             var clients = await _context.Clients.ToListAsync();
-            
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Clients");
 
-            worksheet.Cells[1, 1].Value = "ID";
-            worksheet.Cells[1, 2].Value = "Name";
-            worksheet.Cells[1, 3].Value = "Document";
-            worksheet.Cells[1, 4].Value = "Email";
-            worksheet.Cells[1, 5].Value = "Phone";
-
-            for (int i = 0; i < clients.Count; i++)
+            using (var package = new ExcelPackage())
             {
-                worksheet.Cells[i + 2, 1].Value = clients[i].Id;
-                worksheet.Cells[i + 2, 2].Value = clients[i].Name;
-                worksheet.Cells[i + 2, 3].Value = clients[i].Document;
-                worksheet.Cells[i + 2, 4].Value = clients[i].Email;
-                worksheet.Cells[i + 2, 5].Value = clients[i].Phone;
-            }
+                var worksheet = package.Workbook.Worksheets.Add("Clients");
+                worksheet.Cells[1, 1].Value = "ID";
+                worksheet.Cells[1, 2].Value = "Name";
+                worksheet.Cells[1, 3].Value = "Document";
+                worksheet.Cells[1, 4].Value = "Email";
+                worksheet.Cells[1, 5].Value = "Phone";
+                worksheet.Cells[1, 6].Value = "Address";
 
-            var stream = new MemoryStream();
-            await package.SaveAsAsync(stream);
-            stream.Position = 0;
-            
-            var fileName = $"Clients_{System.DateTime.Now:yyyyMMddHHmmss}.xlsx";
-            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                int row = 2;
+                foreach (var client in clients)
+                {
+                    worksheet.Cells[row, 1].Value = client.Id;
+                    worksheet.Cells[row, 2].Value = client.Name;
+                    worksheet.Cells[row, 3].Value = client.Document;
+                    worksheet.Cells[row, 4].Value = client.Email;
+                    worksheet.Cells[row, 5].Value = client.Phone;
+                    worksheet.Cells[row, 6].Value = client.Address;
+                    row++;
+                }
+
+                var fileBytes = package.GetAsByteArray();
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Clients.xlsx");
+            }
         }
 
-        // GET: Clients/ExportToPdf
+        // Export to PDF
+        [HttpGet]
         public async Task<IActionResult> ExportToPdf()
         {
             var clients = await _context.Clients.ToListAsync();
-            
-            QuestPDF.Settings.License = LicenseType.Community;
-            var pdfData = Document.Create(container =>
+
+            var document = Document.Create(container =>
             {
                 container.Page(page =>
                 {
-                    page.Margin(30);
-                    page.Header().Text("Clients List").SemiBold().FontSize(24);
+                    page.Size(PageSizes.A4);
+                    page.Margin(2, Unit.Centimetre);
+                    page.Header().Text("Clients Report").FontSize(20).Bold();
+
                     page.Content().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.ConstantColumn(50);
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
+                            columns.RelativeColumn(1);
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn(1);
                         });
 
                         table.Header(header =>
                         {
-                            header.Cell().Text("ID");
-                            header.Cell().Text("Name");
-                            header.Cell().Text("Document");
-                            header.Cell().Text("Email");
+                            header.Cell().Text("ID").Bold();
+                            header.Cell().Text("Name").Bold();
+                            header.Cell().Text("Email").Bold();
+                            header.Cell().Text("Phone").Bold();
+                            header.Cell().Text("Document").Bold();
                         });
 
                         foreach (var client in clients)
                         {
                             table.Cell().Text(client.Id.ToString());
                             table.Cell().Text(client.Name);
-                            table.Cell().Text(client.Document);
                             table.Cell().Text(client.Email);
+                            table.Cell().Text(client.Phone);
+                            table.Cell().Text(client.Document);
                         }
                     });
-                    page.Footer()
-                        .AlignCenter()
-                        .Text(x =>
-                        {
-                            x.Span("Page ");
-                            x.CurrentPageNumber();
-                            x.Span(" of ");
-                            x.TotalPages();
-                        });
                 });
-            }).GeneratePdf();
+            });
 
-            var fileName = $"Clients_{System.DateTime.Now:yyyyMMddHHmmss}.pdf";
-            return File(pdfData, "application/pdf", fileName);
+            var pdf = document.GeneratePdf();
+            return File(pdf, "application/pdf", "Clients.pdf");
         }
-
-        #endregion
     }
 }
+

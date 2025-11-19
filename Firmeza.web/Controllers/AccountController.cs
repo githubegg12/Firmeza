@@ -1,5 +1,5 @@
 using Firmeza.Application.Interfaces;
-using Firmeza.Domain.Entities;
+using Firmeza.Identity.Entities;
 using Firmeza.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -18,82 +18,105 @@ public class AccountController : Controller
         _userManager = userManager;
     }
 
+    // GET: Login
     [HttpGet]
+    [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
     {
-        return View(new LoginViewModel { ReturnUrl = returnUrl ?? "/" });
+        return View(new LoginViewModel
+        {
+            ReturnUrl = returnUrl ?? Url.Content("~/"),
+        });
     }
 
+
+    // POST: Login
     [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         if (!ModelState.IsValid)
             return View(model);
 
-        // Attempt to sign in using the authentication service
         var result = await _authService.SignInAsync(model.Username, model.Password, model.RememberMe);
+
         if (!result.Success)
         {
-            // If login fails, show the first error
-            ModelState.AddModelError(string.Empty, result.Errors?.FirstOrDefault() ?? "Error al iniciar sesión");
+            ModelState.AddModelError("", result.Errors?.FirstOrDefault() ?? "Invalid username or password.");
             return View(model);
         }
 
-        // Find the user to check roles
         var user = await _userManager.FindByNameAsync(model.Username);
-        if (user != null)
-        {
-            var roles = await _userManager.GetRolesAsync(user);
 
-            // Redirect based on role
-            if (roles.Contains("Administrador"))
-                return RedirectToAction("Index", "Admin"); // Admin dashboard
-            if (roles.Contains("Cliente"))
-                return RedirectToAction("Index", "Client"); // Client dashboard
+        if (user == null)
+        {
+            ModelState.AddModelError("", "Unexpected error: user not found after login.");
+            return View(model);
         }
 
-        // If user has no recognized role, redirect to ReturnUrl if present
-        if (!string.IsNullOrEmpty(model.ReturnUrl))
+        var roles = await _userManager.GetRolesAsync(user);
+
+        // Si existe ReturnUrl y es segura → úsala
+        if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return LocalRedirect(model.ReturnUrl);
 
-        // Fallback to Home if no ReturnUrl or role matched
+        // Redirección por roles
+        if (roles.Contains("Administrador"))
+            return RedirectToAction("Index", "Admin", new { area = "Admin" });
+
+        if (roles.Contains("Cliente"))
+            return RedirectToAction("Index", "Client", new { area = "Client" });
+
+        // Usuario sin rol conocido → inicio
         return RedirectToAction("Index", "Home");
     }
 
+    // GET: Register
     [HttpGet]
+    [AllowAnonymous]
     public IActionResult Register()
     {
         return View(new RegisterViewModel());
     }
 
+    // POST: Register
     [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (!ModelState.IsValid)
             return View(model);
 
-        // Por defecto registramos como Cliente
-        var role = string.IsNullOrEmpty(model.Role) ? "Cliente" : model.Role;
+        var role = string.IsNullOrWhiteSpace(model.Role) ? "Cliente" : model.Role;
+
         var result = await _authService.RegisterAsync(model.Username, model.Email, model.Password, role);
+
         if (!result.Success)
         {
-            foreach (var err in result.Errors ?? Enumerable.Empty<string>())
-                ModelState.AddModelError(string.Empty, err);
+            foreach (var error in result.Errors ?? Enumerable.Empty<string>())
+                ModelState.AddModelError("", error);
+
             return View(model);
         }
 
-        // Login automático tras registro
+        // Auto login después del registro
         await _authService.SignInAsync(model.Username, model.Password, false);
-        return RedirectToAction("Index", "Home");
+
+        return RedirectToAction("Index", "Client");
     }
 
+    // POST: Logout
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await _authService.SignOutAsync();
         return RedirectToAction("Index", "Home");
     }
 
+    // Access Denied
     [HttpGet]
     [AllowAnonymous]
     public IActionResult AccessDenied()
@@ -101,3 +124,4 @@ public class AccountController : Controller
         return View();
     }
 }
+

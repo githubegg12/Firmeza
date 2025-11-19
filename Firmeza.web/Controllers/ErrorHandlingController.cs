@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace Firmeza.web.Controllers
 {
     public class ErrorHandlingController : Controller
@@ -42,3 +41,4 @@ namespace Firmeza.web.Controllers
         }
     }
 }
+

@@ -1,0 +1,49 @@
+@model IEnumerable<Firmeza.Application.DTOs.ProductDto>
+
+@{
+    ViewData["Title"] = "Productos";
+}
+
+<div class="container mt-5">
+    <h1>@ViewData["Title"]</h1>
+
+    <a href="/Products/Create" class="btn btn-primary mb-3">Nuevo Producto</a>
+
+    @if (Model.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model)
+                {
+                    <tr>
+                        <td>@product.Id</td>
+                        <td>@product.Name</td>
+                        <td>@product.Category</td>
+                        <td>$@product.Price.ToString("F2")</td>
+                        <td>@product.Stock</td>
+                        <td>
+                            <a href="/Products/Details/@product.Id" class="btn btn-info btn-sm">Ver</a>
+                            <a href="/Products/Edit/@product.Id" class="btn btn-warning btn-sm">Editar</a>
+                            <a href="/Products/Delete/@product.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No hay productos registrados.</p>
+    }
+</div>
+

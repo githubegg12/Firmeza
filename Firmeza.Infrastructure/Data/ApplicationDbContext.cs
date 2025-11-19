@@ -1,4 +1,5 @@
 using Firmeza.Domain.Entities;
+using Firmeza.Identity.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,14 @@ namespace Firmeza.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // Configure relationships and constraints explicitly
+            // ---- RELACIÓN CLIENTE ↔ USUARIO (Identity) ----
+            builder.Entity<Client>()
+                .HasOne<ApplicationUser>()                // Navigation via Fluent API only
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ---- RELACIONES DE NEGOCIO ----
             builder.Entity<Sale>()
                 .HasOne(s => s.Client)
                 .WithMany(c => c.Sales)
@@ -31,7 +39,7 @@ namespace Firmeza.Infrastructure.Data
 
             builder.Entity<SaleDetail>()
                 .HasOne(sd => sd.Sale)
-                .WithMany(s => s.SaleDetails) // CORRECTED: This should point to the correct navigation property
+                .WithMany(s => s.SaleDetails)
                 .HasForeignKey(sd => sd.SaleId);
 
             builder.Entity<SaleDetail>()

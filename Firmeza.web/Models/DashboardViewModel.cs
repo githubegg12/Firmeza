@@ -1,11 +1,13 @@
 namespace Firmeza.web.Models;
 
 /// <summary>
-/// ViewModel to hold the data required for the main admin dashboard.
+/// View model for dashboard information
 /// </summary>
 public class DashboardViewModel
 {
-    public int TotalProducts { get; set; }
     public int TotalClients { get; set; }
+    public int TotalProducts { get; set; }
     public int TotalSales { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public DateTime LastUpdated { get; set; }
 }

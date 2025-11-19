@@ -1,7 +1,7 @@
-@using Firmeza.Domain.Entities
+@using Firmeza.Identity.Entities
 @using Microsoft.AspNetCore.Identity
 
-@* CORRECTED: Injected services now use the correct 'User' class from the Domain layer *@
+@* CORRECTED: Injected services now use the correct 'User' class from the Identity layer *@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 

@@ -1,6 +1,9 @@
+using Firmeza.Application.Features.Products.Commands;
+using Firmeza.Application.Features.Products.Queries;
 using Firmeza.Application.Interfaces;
-using Firmeza.Domain.Entities;
 using Firmeza.Domain.Interfaces;
+using Firmeza.Identity.Entities;
+using Firmeza.Identity.Services;
 using Firmeza.Infrastructure.Data;
 using Firmeza.Infrastructure.Repositories;
 using Firmeza.Infrastructure.Services;
@@ -8,6 +11,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using IBulkImportService = Firmeza.Application.Features.BulkImport.IBulkImportService;
+using IdentityOptions = Firmeza.Identity.Configurations.IdentityOptions;
+using IPdfService = Firmeza.Application.Features.Pdf.IPdfService;
 
 namespace Firmeza.Infrastructure;
 
@@ -24,42 +30,57 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         // -------------------------
-        // Configure Identity with options
+        // Configure Identity with centralized options
         // -------------------------
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
-                // SignIn options
-                options.SignIn.RequireConfirmedAccount = false;
-
-                // Password options
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = false;
-                options.Password.RequiredLength = 6;
-
-                // Lockout, user, etc., can also be configured here if needed
+                IdentityOptions.ConfigurePasswordOptions(options);
             })
-            .AddRoles<IdentityRole>() // Enable roles
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders(); // Important for password reset, email confirmation, etc.
+            .AddDefaultTokenProviders();
 
         // -------------------------
-        // Register repositories
+        // Configure Application Cookie
+        // -------------------------
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/Account/Login";
+            options.AccessDeniedPath = "/Account/AccessDenied";
+            options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        });
+
+        // -------------------------
+        // Register Repositories
         // -------------------------
         services.AddScoped<IProductRepository, ProductRepository>();
 
         // -------------------------
-        // Register custom services
+        // Register Product Features (Commands & Queries)
+        // -------------------------
+        services.AddScoped<ICreateProductCommand, CreateProductCommand>();
+        services.AddScoped<IUpdateProductCommand, UpdateProductCommand>();
+        services.AddScoped<IDeleteProductCommand, DeleteProductCommand>();
+        services.AddScoped<IGetProductsQuery, GetProductsQuery>();
+
+
+        // -------------------------
+        // Register Custom Services
         // -------------------------
         services.AddScoped<IBulkImportService, BulkImportService>();
         services.AddScoped<IPdfService, PdfService>();
 
         // -------------------------
-        // Register Authentication service
-        // Encapsulates Identity logic for Application layer
+        // Register Authentication Service
         // -------------------------
         services.AddScoped<IAuthService, AuthService>();
+
+        // -------------------------
+        // Register Database Initializer (for domain data seeding)
+        // -------------------------
+        services.AddScoped<IDbInitializer, DbInitializer>();
 
         return services;
     }
 }
+

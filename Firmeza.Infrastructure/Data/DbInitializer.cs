@@ -1,5 +1,7 @@
 using Firmeza.Application.Interfaces; // Will use the interface from the Application layer
 using Firmeza.Domain.Entities;
+using Firmeza.Identity;
+using Firmeza.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,36 +25,80 @@ namespace Firmeza.Infrastructure.Data
 
         public async Task InitializeAsync()
         {
+            // Ejecutar migraciones pendientes
             if ((await _context.Database.GetPendingMigrationsAsync()).Any())
             {
                 await _context.Database.MigrateAsync();
             }
 
-            if (!await _roleManager.RoleExistsAsync("Administrador"))
+            // Crear roles por defecto
+            var roles = new[] { "Administrador", "Cliente", "Empleado" };
+            foreach (var role in roles)
             {
-                await _roleManager.CreateAsync(new IdentityRole("Administrador"));
-            }
-            if (!await _roleManager.RoleExistsAsync("Cliente"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("Cliente"));
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(role));
+                }
             }
 
+            // Crear usuario administrador de prueba
             var adminEmail = "admin@firmeza.com";
             if (await _userManager.FindByEmailAsync(adminEmail) == null)
             {
-                var adminUser = new ApplicationUser // CORRECTED: Using the correct 'User' entity
+                var adminUser = new ApplicationUser
                 {
-                    UserName = adminEmail,
+                    UserName = "admin",
                     Email = adminEmail,
                     EmailConfirmed = true,
                 };
 
-                var result = await _userManager.CreateAsync(adminUser, "Admin123*");
-
+                var result = await _userManager.CreateAsync(adminUser, "Admin123!");
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(adminUser, "Administrador");
                 }
+            }
+
+            // Crear usuario cliente de prueba
+            var clientEmail = "cliente@firmeza.com";
+            if (await _userManager.FindByEmailAsync(clientEmail) == null)
+            {
+                var clientUser = new ApplicationUser
+                {
+                    UserName = "cliente",
+                    Email = clientEmail,
+                    EmailConfirmed = true,
+                };
+
+                var result = await _userManager.CreateAsync(clientUser, "Cliente123!");
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(clientUser, "Cliente");
+                }
+            }
+
+            // Crear datos de prueba si no existen
+            if (!_context.Clients.Any())
+            {
+                var clients = new[]
+                {
+                    new Client { Name = "Cliente 1", Document = "12345678", Email = "cliente1@test.com", Phone = "123456789", Address = "Calle 1" },
+                    new Client { Name = "Cliente 2", Document = "87654321", Email = "cliente2@test.com", Phone = "987654321", Address = "Calle 2" }
+                };
+                _context.Clients.AddRange(clients);
+                await _context.SaveChangesAsync();
+            }
+
+            if (!_context.Products.Any())
+            {
+                var products = new[]
+                {
+                    new Product { Name = "Producto 1", Description = "Descripción 1", Category = "Categoría A", Price = 100.00m, Stock = 50, ImageUrl = "" },
+                    new Product { Name = "Producto 2", Description = "Descripción 2", Category = "Categoría B", Price = 200.00m, Stock = 30, ImageUrl = "" },
+                    new Product { Name = "Producto 3", Description = "Descripción 3", Category = "Categoría A", Price = 150.00m, Stock = 20, ImageUrl = "" }
+                };
+                _context.Products.AddRange(products);
+                await _context.SaveChangesAsync();
             }
         }
     }

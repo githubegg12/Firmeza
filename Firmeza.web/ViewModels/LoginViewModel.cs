@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Firmeza.web.ViewModels;
 
+/// <summary>
+/// View model for user login
+/// </summary>
 public class LoginViewModel
 {
     [Required]
@@ -15,4 +18,3 @@ public class LoginViewModel
 
     public string ReturnUrl { get; set; } = "/";
 }
-

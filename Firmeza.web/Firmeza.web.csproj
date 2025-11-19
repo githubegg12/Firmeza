@@ -27,6 +27,7 @@
     <ItemGroup>
       <!-- Project references to lower layers -->
       <ProjectReference Include="..\Firmeza.Application\Firmeza.Application.csproj" />
+      <ProjectReference Include="..\Firmeza.Identity\Firmeza.Identity.csproj" />
       <ProjectReference Include="..\Firmeza.Infrastructure\Firmeza.Infrastructure.csproj" />
     </ItemGroup>
 

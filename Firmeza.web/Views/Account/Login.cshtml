@@ -1,27 +1,31 @@
 @model Firmeza.web.ViewModels.LoginViewModel
-@{
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
-<h2>Iniciar sesión</h2>
-<form method="post" asp-controller="Account" asp-action="Login">
-    <input type="hidden" asp-for="ReturnUrl" />
-    <div>
-        <label asp-for="Username"></label>
-        <input asp-for="Username" />
-        <span asp-validation-for="Username"></span>
-    </div>
-    <div>
-        <label asp-for="Password"></label>
-        <input asp-for="Password" />
-        <span asp-validation-for="Password"></span>
-    </div>
-    <div>
-        <label asp-for="RememberMe"></label>
-        <input asp-for="RememberMe" type="checkbox" />
-    </div>
-    <button type="submit">Entrar</button>
-</form>
-<p>
-    <a asp-controller="Account" asp-action="Register">Registrarse</a>
-</p>
 
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1>Iniciar Sesión</h1>
+
+            <form method="post" asp-action="Login">
+                
+                @await Html.PartialAsync("_UserFieldsPartial", new Firmeza.web.ViewModels.UserFieldsViewModel
+                {
+                    IncludeEmail = false,
+                    IncludeConfirmPassword = false
+                })
+
+                <div class="form-check">
+                    <input asp-for="RememberMe" class="form-check-input"/>
+                    <label asp-for="RememberMe" class="form-check-label"></label>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-3 w-100">Entrar</button>
+
+                <p class="mt-3">
+                    ¿Aún no tienes cuenta?
+                    <a asp-action="Register">Regístrate aquí</a>
+                </p>
+
+            </form>
+        </div>
+    </div>
+</div>

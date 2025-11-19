@@ -1,36 +1,47 @@
-using Firmeza.Application.Interfaces;
+using Firmeza.Application.Features.BulkImport;
 using Firmeza.Domain.Entities;
 using Firmeza.Infrastructure.Data;
-using Firmeza.Application.DTOs; // CORRECTED: Using the DTO from the Application layer
+using Firmeza.Application.DTOs;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 
+namespace Firmeza.Infrastructure.Services;
 
-namespace Firmeza.Infrastructure.Services
+/// <summary>
+/// Service for bulk importing products from Excel files
+/// </summary>
+public class BulkImportService : IBulkImportService
 {
-    public class BulkImportService : IBulkImportService
+    private readonly ApplicationDbContext _context;
+
+    public BulkImportService(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+    }
 
-        public BulkImportService(ApplicationDbContext context)
+    public async Task<BulkImportResultDto> ProcessExcelFileAsync(Stream stream)
+    {
+        var result = new BulkImportResultDto();
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        try
         {
-            _context = context;
-        }
-
-        public async Task<BulkImportResultDto> ProcessExcelFileAsync(Stream stream)
-        {
-            var result = new BulkImportResultDto(); // CORRECTED: Using the DTO
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage(stream);
             var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+            
             if (worksheet == null)
             {
-                result.LogMessages.Add("ERROR: The Excel file is empty or corrupted.");
+                result.LogMessages.Add("ERROR: Excel file is empty or corrupted.");
                 return result;
             }
 
-            result.TotalRows = worksheet.Dimension.End.Row - 1;
+            result.TotalRows = worksheet.Dimension?.End.Row - 1 ?? 0;
+            if (result.TotalRows == 0)
+            {
+                result.LogMessages.Add("ERROR: No data found in file.");
+                return result;
+            }
+
             var headers = GetHeaders(worksheet);
 
             for (int row = 2; row <= worksheet.Dimension.End.Row; row++)
@@ -44,53 +55,65 @@ namespace Firmeza.Infrastructure.Services
                     var quantityStr = GetValue(worksheet, row, headers, "Quantity");
                     var unitPriceStr = GetValue(worksheet, row, headers, "UnitPrice");
 
-                    if (string.IsNullOrWhiteSpace(clientDocument) || string.IsNullOrWhiteSpace(productName) || 
+                    if (string.IsNullOrWhiteSpace(clientDocument) || string.IsNullOrWhiteSpace(productName) ||
                         !int.TryParse(quantityStr, out int quantity) || !decimal.TryParse(unitPriceStr, out decimal unitPrice))
                     {
-                        result.LogMessages.Add($"Row {row}: SKIPPED. Missing required data (ClientDocument, ProductName, Quantity, UnitPrice).");
+                        result.LogMessages.Add($"Row {row}: SKIPPED. Missing required data.");
                         result.FailedRows++;
                         continue;
                     }
 
+                    // Process Client
                     var client = await _context.Clients.FirstOrDefaultAsync(c => c.Document == clientDocument);
                     if (client == null)
                     {
-                        client = new Client { Document = clientDocument, Name = clientName, Email = GetValue(worksheet, row, headers, "ClientEmail", $"{clientDocument}@example.com") };
+                        client = new Client
+                        {
+                            Document = clientDocument,
+                            Name = clientName ?? "Unknown Client",
+                            Email = GetValue(worksheet, row, headers, "ClientEmail", $"{clientDocument}@example.com"),
+                            Phone = GetValue(worksheet, row, headers, "ClientPhone", ""),
+                            Address = GetValue(worksheet, row, headers, "ClientAddress", "")
+                        };
                         _context.Clients.Add(client);
                         result.LogMessages.Add($"Row {row}: INSERTING new client: {client.Name}");
                         result.SuccessfulInserts++;
                     }
                     else
                     {
-                        client.Name = clientName;
-                        _context.Clients.Update(client);
-                        result.LogMessages.Add($"Row {row}: FOUND existing client: {client.Name}");
+                        result.LogMessages.Add($"Row {row}: Existing client found: {client.Name}");
                         result.SuccessfulUpdates++;
                     }
 
+                    // Process Product
                     var product = await _context.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == productName.ToLower());
                     if (product == null)
                     {
-                        product = new Product { Name = productName, Price = unitPrice, Stock = 100, Description = "Auto-imported product", Category = "General" };
+                        product = new Product
+                        {
+                            Name = productName,
+                            Price = unitPrice,
+                            Stock = 100,
+                            Description = "Auto-imported product",
+                            Category = GetValue(worksheet, row, headers, "ProductCategory", "General")
+                        };
                         _context.Products.Add(product);
                         result.LogMessages.Add($"Row {row}: INSERTING new product: {product.Name}");
                         result.SuccessfulInserts++;
                     }
                     else
                     {
-                        product.Price = unitPrice;
-                        _context.Products.Update(product);
-                        result.LogMessages.Add($"Row {row}: FOUND existing product: {product.Name}");
-                        result.SuccessfulUpdates++;
+                        result.LogMessages.Add($"Row {row}: Existing product found: {product.Name}");
                     }
-                    
+
+                    // Create Sale
                     var sale = new Sale
                     {
                         Client = client,
                         SaleDate = DateTime.TryParse(saleDateStr, out var saleDate) ? saleDate : DateTime.Now,
                         TotalAmount = quantity * unitPrice
                     };
-                    
+
                     var saleDetail = new SaleDetail
                     {
                         Sale = sale,
@@ -101,38 +124,49 @@ namespace Firmeza.Infrastructure.Services
 
                     _context.Sales.Add(sale);
                     _context.SaleDetails.Add(saleDetail);
-
-                    result.ProcessedRows++;
+                    
+                    result.LogMessages.Add($"Row {row}: Sale created for {client.Name}");
+                    result.SuccessfulInserts++;
                 }
                 catch (Exception ex)
                 {
-                    result.LogMessages.Add($"Row {row}: FAILED. Error: {ex.Message}");
                     result.FailedRows++;
+                    result.LogMessages.Add($"Row {row}: ERROR - {ex.Message}");
                 }
             }
 
             await _context.SaveChangesAsync();
-            result.LogMessages.Add("--- Import Finished. Database has been updated. ---");
-            return result;
+            result.LogMessages.Add($"Import completed: {result.SuccessfulInserts} inserted, {result.FailedRows} skipped.");
+        }
+        catch (Exception ex)
+        {
+            result.LogMessages.Add($"General error: {ex.Message}");
         }
 
-        private Dictionary<string, int> GetHeaders(ExcelWorksheet worksheet)
+        return result;
+    }
+
+    private static Dictionary<string, int> GetHeaders(ExcelWorksheet worksheet)
+    {
+        var headers = new Dictionary<string, int>();
+        for (int col = 1; col <= worksheet.Dimension.End.Column; col++)
         {
-            var headers = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            for (int col = 1; col <= worksheet.Dimension.End.Column; col++)
+            var headerValue = worksheet.Cells[1, col].Value?.ToString() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(headerValue))
             {
-                var header = worksheet.Cells[1, col].Text;
-                if (!string.IsNullOrWhiteSpace(header) && !headers.ContainsKey(header))
-                {
-                    headers.Add(header, col);
-                }
+                headers[headerValue] = col;
             }
-            return headers;
         }
+        return headers;
+    }
 
-        private string GetValue(ExcelWorksheet ws, int row, Dictionary<string, int> headers, string headerName, string defaultValue = "")
+    private static string GetValue(ExcelWorksheet worksheet, int row, Dictionary<string, int> headers, string headerName, string? defaultValue = null)
+    {
+        if (headers.TryGetValue(headerName, out int col))
         {
-            return headers.TryGetValue(headerName, out int col) ? ws.Cells[row, col].Text : defaultValue;
+            return worksheet.Cells[row, col].Value?.ToString() ?? defaultValue ?? string.Empty;
         }
+        return defaultValue ?? string.Empty;
     }
 }
+

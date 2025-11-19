@@ -1,55 +1,31 @@
 @{
-    ViewData["Title"] = "Age Validator";
+    ViewData["Title"] = "Error Handling";
 }
 
-<h2>@ViewData["Title"]</h2>
-<p>Please enter your age below.</p>
+<div class="container mt-5">
+    <h1>@ViewData["Title"]</h1>
+    <p>Prueba de manejo de errores.</p>
 
-<!-- The form will POST to the ProcessAge action in the ErrorHandlingController -->
-<form asp-controller="ErrorHandling" asp-action="ProcessAge" method="post">
-    <div>
-        <label for="ageInput">Your Age:</label>
-        <input type="text" id="ageInput" name="ageInput" />
-    </div>
-    <button type="submit">Submit</button>
-</form>
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-success">
+            @ViewBag.Message
+        </div>
+    }
 
-<hr />
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.ErrorMessage
+        </div>
+    }
 
-<!-- Display success or error messages here -->
-@if (ViewBag.Message != null)
-{
-    <div style="color: green;">
-        <p>@ViewBag.Message</p>
-    </div>
-}
+    <form method="post" action="/ErrorHandling/ProcessAge" class="mt-4">
+        <div class="form-group">
+            <label for="ageInput">Ingresa tu edad:</label>
+            <input type="text" class="form-control" id="ageInput" name="ageInput" placeholder="Ej: 25" />
+        </div>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+</div>
 
-@if (ViewBag.ErrorMessage != null)
-{
-    <div style="color: red;">
-        <p>@ViewBag.ErrorMessage</p>
-    </div>
-}
-
-<hr />
-
-<h3>Alternative using TryParse (Recommended)</h3>
-<p>
-    While the example above uses <code>try-catch</code> as requested, a more efficient and common way to handle this in C# is with <code>int.TryParse()</code>. 
-    It doesn't throw an exception on failure, which is better for performance when handling expected user input errors.
-</p>
-<pre>
-<code>
-// Controller code using TryParse
-if (int.TryParse(ageInput, out int age))
-{
-    // Success
-    ViewBag.Message = $"Thank you! Your age is: {age}";
-}
-else
-{
-    // Failure
-    ViewBag.ErrorMessage = "Invalid input. Please enter a valid whole number for your age.";
-}
-</code>
-</pre>

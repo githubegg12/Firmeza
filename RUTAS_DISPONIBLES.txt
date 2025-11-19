@@ -1,0 +1,166 @@
+// RUTAS DISPONIBLES EN LA APLICACIÓN FIRMEZA
+// ============================================
+
+// -------- AUTENTICACIÓN (Account) --------
+GET    /Account/Login              → Formulario de inicio de sesión
+POST   /Account/Login              → Procesar inicio de sesión
+GET    /Account/Register           → Formulario de registro
+POST   /Account/Register           → Procesar registro
+POST   /Account/Logout             → Cerrar sesión
+GET    /Account/AccessDenied       → Página de acceso denegado
+
+// -------- HOME --------
+GET    /Home/Index                 → Página de inicio
+GET    /Home/Privacy               → Página de privacidad
+GET    /Home/Error                 → Página de error
+
+// -------- ADMINISTRADOR (Admin) --------
+GET    /Admin/Index                → Panel de administrador
+GET    /Admin/Dashboard            → Dashboard administrativo
+
+// -------- CLIENTES (Client) --------
+GET    /Client/Index               → Listar clientes (con búsqueda)
+GET    /Client/Create              → Formulario crear cliente
+POST   /Client/Create              → Guardar nuevo cliente
+GET    /Client/Edit/{id}           → Formulario editar cliente
+POST   /Client/Edit/{id}           → Actualizar cliente
+GET    /Client/Delete/{id}         → Confirmación eliminar cliente
+POST   /Client/Delete/{id}         → Eliminar cliente
+GET    /Client/ExportToExcel       → Exportar clientes a Excel
+GET    /Client/ExportToPdf         → Exportar clientes a PDF
+
+// -------- PRODUCTOS (Products) --------
+GET    /Products/Index             → Listar productos
+GET    /Products/Details/{id}      → Detalles del producto
+GET    /Products/Create            → Formulario crear producto
+POST   /Products/Create            → Guardar nuevo producto
+GET    /Products/Edit/{id}         → Formulario editar producto
+POST   /Products/Edit/{id}         → Actualizar producto
+GET    /Products/Delete/{id}       → Confirmación eliminar producto
+POST   /Products/Delete/{id}       → Eliminar producto
+
+// -------- VENTAS (Sales) --------
+GET    /Sales/Index                → Listar ventas
+GET    /Sales/Details/{id}         → Detalles de la venta
+GET    /Sales/Create               → Formulario crear venta
+POST   /Sales/Create               → Guardar nueva venta
+GET    /Sales/Delete/{id}          → Confirmación eliminar venta
+POST   /Sales/Delete/{id}          → Eliminar venta
+GET    /Sales/ExportToPdf/{id}     → Exportar venta a PDF
+
+// -------- IMPORTACIÓN MASIVA (BulkImport) --------
+GET    /BulkImport/Index           → Formulario de importación de Excel
+POST   /BulkImport/Upload          → Procesar archivo Excel
+
+// -------- MANEJO DE ERRORES (ErrorHandling) --------
+GET    /ErrorHandling/Index        → Formulario de prueba de errores
+POST   /ErrorHandling/ProcessAge   → Procesar entrada de edad
+
+// ============================================
+// ESTRUCTURA DE CARPETAS (ARQUITECTURA LIMPIA)
+// ============================================
+
+// PRESENTACIÓN (Firmeza.web)
+Firmeza.web/
+├── Features/
+│   ├── Account/
+│   │   ├── Controllers/
+│   │   │   └── AccountController.cs
+│   │   └── ViewModels/
+│   │       ├── LoginViewModel.cs
+│   │       └── RegisterViewModel.cs
+│   ├── Admin/
+│   │   └── Controllers/
+│   │       └── AdminController.cs
+│   ├── Client/
+│   │   ├── Controllers/
+│   │   │   └── ClientController.cs
+│   │   └── ViewModels/
+│   │       └── ClientViewModel.cs
+│   ├── Products/
+│   │   └── Controllers/
+│   │       └── ProductsController.cs
+│   ├── Sales/
+│   │   └── Controllers/
+│   │       └── SalesController.cs
+│   ├── BulkImport/
+│   │   └── Controllers/
+│   │       └── BulkImportController.cs
+│   └── ErrorHandling/
+│       └── Controllers/
+│           └── ErrorHandlingController.cs
+├── Controllers/
+│   └── HomeController.cs
+├── Views/
+├── Models/
+└── Program.cs
+
+// APLICACIÓN (Firmeza.Application)
+Firmeza.Application/
+├── Features/
+│   ├── Products/
+│   │   ├── Commands/
+│   │   │   ├── ICreateProductCommand.cs
+│   │   │   ├── CreateProductCommand.cs
+│   │   │   ├── IUpdateProductCommand.cs
+│   │   │   ├── UpdateProductCommand.cs
+│   │   │   ├── IDeleteProductCommand.cs
+│   │   │   └── DeleteProductCommand.cs
+│   │   └── Queries/
+│   │       ├── IGetProductsQuery.cs
+│   │       └── GetProductsQuery.cs
+│   ├── Authentication/
+│   │   └── IAuthService.cs
+│   ├── BulkImport/
+│   │   └── IBulkImportService.cs
+│   └── Pdf/
+│       └── IPdfService.cs
+├── DTOs/
+└── Interfaces/
+
+// DOMINIO (Firmeza.Domain)
+Firmeza.Domain/
+├── Entities/
+├── Interfaces/
+
+// INFRAESTRUCTURA (Firmeza.Infrastructure)
+Firmeza.Infrastructure/
+├── Identity/
+│   └── IdentityOptions.cs
+├── Services/
+│   ├── AuthService.cs
+│   ├── BulkImportService.cs
+│   └── PdfService.cs
+├── Repositories/
+├── Data/
+└── DependencyInjection.cs
+
+// ============================================
+// NOTAS IMPORTANTES
+// ============================================
+
+1. ARQUITECTURA LIMPIA:
+   - Features: Separadas por funcionalidad principal
+   - Clear Separation: Cada feature tiene su propia estructura
+   - Namespaces: Organizados jerárquicamente
+
+2. IDENTITY CENTRALIZADO:
+   - Todos los settings de Identity en: Firmeza.Infrastructure.Identity.IdentityOptions
+   - Define roles por defecto: Administrador, Cliente, Empleado
+
+3. RUTAS POR DEFECTO:
+   - Home: / o /Home/Index
+   - Admin: Requiere rol "Administrador"
+   - Cliente: Accesible para usuarios registrados
+
+4. VISTAS DESAPARECIDAS (RESUELTAS):
+   - /Views/Admin/Index → Vista creada en Features
+   - /Views/BulkImport/Index → Vista creada en Features
+   - /Views/ErrorHandling/Index → Vista creada en Features
+   - /Views/Sales/Index → Vista creada en Features
+   - SalesViewModel → Implementada con Entities directos
+
+5. CARPETAS DUPLICADAS (ELIMINADAS):
+   - Client y Clients → Ahora solo Client en Features
+   - Funcionalidad consolidada en una sola carpeta
+
