@@ -1,0 +1,101 @@
+@using Firmeza.Domain.Entities
+@model Firmeza.Domain.Entities.Sale
+
+@{
+    ViewData["Title"] = "Nueva Venta";
+    Layout = "_AdminLayout";
+    var clients = ViewData["Clients"] as IEnumerable<Client>;
+    var products = ViewData["Products"] as IEnumerable<Product>;
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-cart-plus me-2"></i>Nueva Venta
+        </h1>
+        <a asp-action="Index" class="btn btn-secondary btn-sm shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Listado
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Detalles de la Venta</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-4">
+                            <label for="clientId" class="form-label fw-bold">Cliente</label>
+                            <select name="clientId" id="clientId" class="form-select" required>
+                                <option value="">Seleccione un cliente...</option>
+                                @if (clients != null)
+                                {
+                                    foreach (var client in clients)
+                                    {
+                                        <option value="@client.Id">@client.Name - @client.Document</option>
+                                    }
+                                }
+                            </select>
+                            <div class="form-text">Seleccione el cliente que realiza la compra.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="productId" class="form-label fw-bold">Producto</label>
+                            <select name="productId" id="productId" class="form-select" required onchange="updatePrice()">
+                                <option value="" data-price="0">Seleccione un producto...</option>
+                                @if (products != null)
+                                {
+                                    foreach (var product in products)
+                                    {
+                                        <option value="@product.Id" data-price="@product.Price">@product.Name - $@product.Price</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="quantity" class="form-label fw-bold">Cantidad</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" required onchange="updateTotal()" onkeyup="updateTotal()">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Total Estimado</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" id="totalPreview" class="form-control bg-light" value="0.00" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-light me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Registrar Venta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updatePrice() {
+            updateTotal();
+        }
+
+        function updateTotal() {
+            var price = parseFloat($("#productId option:selected").data("price")) || 0;
+            var quantity = parseInt($("#quantity").val()) || 0;
+            var total = price * quantity;
+            $("#totalPreview").val(total.toFixed(2));
+        }
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

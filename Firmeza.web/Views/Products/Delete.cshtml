@@ -1,0 +1,86 @@
+@model Firmeza.Application.DTOs.ProductDto
+
+@{
+    ViewData["Title"] = "Eliminar Producto";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                    </div>
+
+                    <h5 class="mb-3">¿Está seguro que desea eliminar este producto?</h5>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="30%">ID:</th>
+                                <td>@Model.Id</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre:</th>
+                                <td><strong>@Model.Name</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Categoría:</th>
+                                <td><span class="badge bg-info">@Model.Category</span></td>
+                            </tr>
+                            <tr>
+                                <th>Descripción:</th>
+                                <td>@Model.Description</td>
+                            </tr>
+                            <tr>
+                                <th>Precio:</th>
+                                <td><strong>$@Model.Price.ToString("N2")</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Stock:</th>
+                                <td>
+                                    @if (Model.Stock > 10)
+                                    {
+                                        <span class="badge bg-success">@Model.Stock unidades</span>
+                                    }
+                                    else if (Model.Stock > 0)
+                                    {
+                                        <span class="badge bg-warning">@Model.Stock unidades</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Agotado</span>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                            {
+                                <tr>
+                                    <th>Imagen:</th>
+                                    <td><a href="@Model.ImageUrl" target="_blank">@Model.ImageUrl</a></td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="mt-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash-fill me-1"></i>Eliminar Producto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
