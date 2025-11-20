@@ -6,8 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Firmeza.Application.Features.Pdf;
 using OfficeOpenXml;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace Firmeza.web.Features.Products.Controllers
 {
+    [Authorize(Roles = "Administrador")]
     public class ProductsController : Controller
     {
         private readonly ICreateProductCommand _createCommand;

@@ -2,11 +2,16 @@ using Firmeza.Application.Interfaces;
 using Firmeza.Infrastructure;
 
 using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure QuestPDF License
 QuestPDF.Settings.License = LicenseType.Community;
+
+// FORCE LOGOUT ON RESTART: Use ephemeral keys so cookies from previous runs are invalid.
+builder.Services.AddDataProtection()
+    .UseEphemeralDataProtectionProvider();
 
 // --- Service Registration ---
 builder.Services.AddInfrastructure(builder.Configuration); 

@@ -1,8 +1,11 @@
 using Firmeza.Application.Features.BulkImport;
 using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace Firmeza.web.Controllers
 {
+    [Authorize(Roles = "Administrador")]
     public class BulkImportController : Controller
     {
         private readonly IBulkImportService _bulkImportService;

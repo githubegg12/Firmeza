@@ -7,8 +7,11 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace Firmeza.web.Controllers
 {
+    [Authorize(Roles = "Administrador")]
     public class ClientController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -164,11 +167,11 @@ namespace Firmeza.web.Controllers
                 {
                     var worksheet = package.Workbook.Worksheets.Add("Clients");
                     worksheet.Cells[1, 1].Value = "ID";
-                    worksheet.Cells[1, 2].Value = "Name";
-                    worksheet.Cells[1, 3].Value = "Document";
-                    worksheet.Cells[1, 4].Value = "Email";
-                    worksheet.Cells[1, 5].Value = "Phone";
-                    worksheet.Cells[1, 6].Value = "Address";
+                    worksheet.Cells[1, 2].Value = "ClientName";
+                    worksheet.Cells[1, 3].Value = "ClientDocument";
+                    worksheet.Cells[1, 4].Value = "ClientEmail";
+                    worksheet.Cells[1, 5].Value = "ClientPhone";
+                    worksheet.Cells[1, 6].Value = "ClientAddress";
 
                     int row = 2;
                     foreach (var client in clients)

@@ -39,7 +39,7 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var result = await _authService.SignInAsync(model.Username, model.Password, model.RememberMe);
+        var result = await _authService.SignInAsync(model.Username, model.Password, false);
 
         if (!result.Success)
         {
@@ -89,7 +89,9 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var role = string.IsNullOrWhiteSpace(model.Role) ? "Cliente" : model.Role;
+        // SECURITY FIX: Always force "Cliente" role for new registrations.
+        // Ignore model.Role to prevent privilege escalation.
+        var role = "Cliente";
 
         var result = await _authService.RegisterAsync(model.Username, model.Email, model.Password, role);
 

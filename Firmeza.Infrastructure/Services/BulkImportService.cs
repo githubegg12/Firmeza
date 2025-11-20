@@ -49,6 +49,10 @@ public class BulkImportService : IBulkImportService
                 bool rowProcessed = false;
                 try
                 {
+                    // Track processed items in this batch to prevent in-file duplicates
+                    var processedClientDocuments = new HashSet<string>();
+                    var processedProductNames = new HashSet<string>();
+
                     // Extract potential data
                     var clientDocument = GetValue(worksheet, row, headers, "ClientDocument");
                     var clientName = GetValue(worksheet, row, headers, "ClientName");
@@ -63,35 +67,39 @@ public class BulkImportService : IBulkImportService
                     // --- 1. PROCESS CLIENT ---
                     if (!string.IsNullOrWhiteSpace(clientDocument))
                     {
-                        client = await _context.Clients.FirstOrDefaultAsync(c => c.Document == clientDocument);
-                        if (client == null)
+                        // Check for duplicate in current file
+                        if (processedClientDocuments.Contains(clientDocument))
                         {
-                            client = new Client
-                            {
-                                Document = clientDocument,
-                                Name = !string.IsNullOrWhiteSpace(clientName) ? clientName : "Unknown Client",
-                                Email = GetValue(worksheet, row, headers, "ClientEmail", $"{clientDocument}@example.com"),
-                                Phone = GetValue(worksheet, row, headers, "ClientPhone", ""),
-                                Address = GetValue(worksheet, row, headers, "ClientAddress", "")
-                            };
-                            _context.Clients.Add(client);
-                            result.LogMessages.Add($"Row {row}: [CLIENT] Creating new client '{client.Name}'");
-                            result.SuccessfulInserts++;
+                             result.LogMessages.Add($"Row {row}: [CLIENT] SKIPPED. Duplicate document '{clientDocument}' found in file.");
+                             // We still try to fetch it to process the sale if possible, or just skip?
+                             // If it's a duplicate in file, we might want to use the PREVIOUSLY loaded client for the sale?
+                             // But for now, let's assume we skip the creation/update.
+                             // To allow sale processing, we should try to find it in context (it might be added in previous iteration).
+                             client = _context.Clients.Local.FirstOrDefault(c => c.Document == clientDocument);
                         }
                         else
                         {
-                            // Optional: Update client if new data is provided? For now, just log existence.
-                            // If we wanted to update, we would check if clientName is provided and different.
-                            if (!string.IsNullOrWhiteSpace(clientName) && client.Name != clientName)
+                            client = await _context.Clients.FirstOrDefaultAsync(c => c.Document == clientDocument);
+                            if (client == null)
                             {
-                                client.Name = clientName;
-                                // Update other fields if needed
-                                result.LogMessages.Add($"Row {row}: [CLIENT] Updating existing client '{client.Name}'");
-                                result.SuccessfulUpdates++;
+                                client = new Client
+                                {
+                                    Document = clientDocument,
+                                    Name = !string.IsNullOrWhiteSpace(clientName) ? clientName : "Unknown Client",
+                                    Email = GetValue(worksheet, row, headers, "ClientEmail", $"{clientDocument}@example.com"),
+                                    Phone = GetValue(worksheet, row, headers, "ClientPhone", ""),
+                                    Address = GetValue(worksheet, row, headers, "ClientAddress", "")
+                                };
+                                _context.Clients.Add(client);
+                                processedClientDocuments.Add(clientDocument);
+                                result.LogMessages.Add($"Row {row}: [CLIENT] Creating new client '{client.Name}'");
+                                result.SuccessfulInserts++;
                             }
                             else
                             {
-                                result.LogMessages.Add($"Row {row}: [CLIENT] Found existing client '{client.Name}'");
+                                // STRICT VALIDATION: Do not update, just skip.
+                                result.LogMessages.Add($"Row {row}: [CLIENT] SKIPPED. Client '{client.Name}' ({client.Document}) already exists in DB.");
+                                processedClientDocuments.Add(clientDocument); // Mark as seen so we don't log "Duplicate in file" for next rows
                             }
                         }
                         rowProcessed = true;
@@ -100,36 +108,39 @@ public class BulkImportService : IBulkImportService
                     // --- 2. PROCESS PRODUCT ---
                     if (!string.IsNullOrWhiteSpace(productName))
                     {
-                        product = await _context.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == productName.ToLower());
-                        
-                        decimal.TryParse(unitPriceStr, out decimal price);
-                        
-                        if (product == null)
+                        // Check for duplicate in current file
+                        if (processedProductNames.Contains(productName.ToLower()))
                         {
-                            product = new Product
-                            {
-                                Name = productName,
-                                Price = price > 0 ? price : 0,
-                                Stock = int.TryParse(GetValue(worksheet, row, headers, "Stock"), out int stock) ? stock : 100,
-                                Description = GetValue(worksheet, row, headers, "Description", "Auto-imported product"),
-                                Category = GetValue(worksheet, row, headers, "ProductCategory", "General")
-                            };
-                            _context.Products.Add(product);
-                            result.LogMessages.Add($"Row {row}: [PRODUCT] Creating new product '{product.Name}'");
-                            result.SuccessfulInserts++;
+                            result.LogMessages.Add($"Row {row}: [PRODUCT] SKIPPED. Duplicate product '{productName}' found in file.");
+                             // Try to find in local context for sale
+                            product = _context.Products.Local.FirstOrDefault(p => p.Name.ToLower() == productName.ToLower());
                         }
                         else
                         {
-                            // Update price if provided and different
-                            if (price > 0 && product.Price != price)
+                            product = await _context.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == productName.ToLower());
+                            
+                            decimal.TryParse(unitPriceStr, out decimal price);
+                            
+                            if (product == null)
                             {
-                                product.Price = price;
-                                result.LogMessages.Add($"Row {row}: [PRODUCT] Updating price for '{product.Name}'");
-                                result.SuccessfulUpdates++;
+                                product = new Product
+                                {
+                                    Name = productName,
+                                    Price = price > 0 ? price : 0,
+                                    Stock = int.TryParse(GetValue(worksheet, row, headers, "Stock"), out int stock) ? stock : 100,
+                                    Description = GetValue(worksheet, row, headers, "Description", "Auto-imported product"),
+                                    Category = GetValue(worksheet, row, headers, "ProductCategory", "General")
+                                };
+                                _context.Products.Add(product);
+                                processedProductNames.Add(productName.ToLower());
+                                result.LogMessages.Add($"Row {row}: [PRODUCT] Creating new product '{product.Name}'");
+                                result.SuccessfulInserts++;
                             }
                             else
                             {
-                                result.LogMessages.Add($"Row {row}: [PRODUCT] Found existing product '{product.Name}'");
+                                // STRICT VALIDATION: Do not update, just skip.
+                                result.LogMessages.Add($"Row {row}: [PRODUCT] SKIPPED. Product '{product.Name}' already exists in DB.");
+                                processedProductNames.Add(productName.ToLower());
                             }
                         }
                         rowProcessed = true;
