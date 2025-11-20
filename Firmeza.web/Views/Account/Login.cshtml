@@ -13,6 +13,8 @@
                     IncludeConfirmPassword = false
                 })
 
+                <input type="hidden" asp-for="ReturnUrl" />
+
                 <div class="form-check">
                     <input asp-for="RememberMe" class="form-check-input"/>
                     <label asp-for="RememberMe" class="form-check-label"></label>

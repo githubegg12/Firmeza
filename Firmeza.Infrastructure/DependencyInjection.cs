@@ -54,6 +54,8 @@ public static class DependencyInjection
         // Register Repositories
         // -------------------------
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<ISaleRepository, SaleRepository>();
 
         // -------------------------
         // Register Product Features (Commands & Queries)

@@ -2,58 +2,130 @@
 
 @{
     ViewData["Title"] = "Clientes";
+    Layout = "_AdminLayout";
 }
 
-<div class="container mt-5">
-    <h1>@ViewData["Title"]</h1>
-
-    <a href="/Client/Create" class="btn btn-primary mb-3">Nuevo Cliente</a>
-    <a href="/Client/ExportToExcel" class="btn btn-success mb-3">Exportar Excel</a>
-    <a href="/Client/ExportToPdf" class="btn btn-warning mb-3">Exportar PDF</a>
-
-    <form method="get" class="mb-3">
-        <div class="input-group">
-            <input type="text" class="form-control" name="searchString" placeholder="Buscar por nombre o documento" />
-            <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-4 fw-bold text-dark">
+                        <i class="bi bi-people-fill me-3 text-primary"></i>Clientes
+                    </h1>
+                    <p class="text-muted">Gestión de clientes del sistema</p>
+                </div>
+                <div>
+                    <span class="badge bg-primary fs-5">Total: @Model.Count()</span>
+                </div>
+            </div>
         </div>
-    </form>
+    </div>
 
-    @if (Model.Any())
-    {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Documento</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Dirección</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var client in Model)
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="Create" class="btn btn-success">
+                    <i class="bi bi-person-plus-fill me-2"></i>Nuevo Cliente
+                </a>
+                <a asp-action="ExportToExcel" class="btn btn-outline-success" target="_blank">
+                    <i class="bi bi-file-earmark-excel-fill me-2"></i>Exportar Excel
+                </a>
+                <a asp-action="ExportToPdf" class="btn btn-outline-danger" target="_blank">
+                    <i class="bi bi-file-earmark-pdf-fill me-2"></i>Exportar PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="get" class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" name="searchString" 
+                           value="@ViewData["CurrentFilter"]" 
+                           placeholder="Buscar por nombre o documento..." />
+                </div>
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search me-1"></i>Buscar
+                </button>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
                 {
-                    <tr>
-                        <td>@client.Id</td>
-                        <td>@client.Name</td>
-                        <td>@client.Document</td>
-                        <td>@client.Email</td>
-                        <td>@client.Phone</td>
-                        <td>@client.Address</td>
-                        <td>
-                            <a href="/Client/Edit/@client.Id" class="btn btn-info btn-sm">Editar</a>
-                            <a href="/Client/Delete/@client.Id" class="btn btn-danger btn-sm">Eliminar</a>
-                        </td>
-                    </tr>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
                 }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <p>No hay clientes registrados.</p>
-    }
-</div>
+            </form>
+        </div>
+    </div>
 
+    <div class="row">
+        <div class="col-12">
+            @if (Model.Any())
+            {
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="bi bi-hash me-1"></i>ID</th>
+                                        <th><i class="bi bi-person-fill me-1"></i>Nombre</th>
+                                        <th><i class="bi bi-card-text me-1"></i>Documento</th>
+                                        <th><i class="bi bi-envelope-fill me-1"></i>Email</th>
+                                        <th><i class="bi bi-telephone-fill me-1"></i>Teléfono</th>
+                                        <th><i class="bi bi-geo-alt-fill me-1"></i>Dirección</th>
+                                        <th class="text-center"><i class="bi bi-gear-fill me-1"></i>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var client in Model)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">#@client.Id</td>
+                                            <td>@client.Name</td>
+                                            <td><span class="badge bg-secondary">@client.Document</span></td>
+                                            <td>
+                                                <a href="mailto:@client.Email" class="text-decoration-none">
+                                                    @client.Email
+                                                </a>
+                                            </td>
+                                            <td>@(client.Phone ?? "-")</td>
+                                            <td>
+                                                <small class="text-muted">@client.Address</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a asp-action="Edit" asp-route-id="@client.Id" 
+                                                       class="btn btn-warning" title="Editar">
+                                                        <i class="bi bi-pencil-fill"></i>
+                                                    </a>
+                                                    <a asp-action="Delete" asp-route-id="@client.Id" 
+                                                       class="btn btn-danger" title="Eliminar">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info text-center py-5">
+                    <i class="bi bi-info-circle display-1 d-block mb-3"></i>
+                    <h4>No hay clientes registrados</h4>
+                    <p class="mb-3">Comienza agregando tu primer cliente al sistema.</p>
+                    <a asp-action="Create" class="btn btn-success">
+                        <i class="bi bi-person-plus-fill me-2"></i>Crear Primer Cliente
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

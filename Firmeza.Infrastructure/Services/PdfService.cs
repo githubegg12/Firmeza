@@ -115,7 +115,82 @@ public class PdfService : IPdfService
         var pdfBytes = document.GeneratePdf();
         return Task.FromResult(pdfBytes);
     }
+
+    /// <summary>
+    /// Generates a PDF document listing all products
+    /// </summary>
+    /// <param name="products">List of products to include in the PDF</param>
+    /// <returns>Byte array containing the generated PDF document</returns>
+    public Task<byte[]> GenerateProductListPdfAsync(IEnumerable<Firmeza.Application.DTOs.ProductDto> products)
+    {
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header()
+                    .Text("Lista de Productos")
+                    .SemiBold().FontSize(20).FontColor(Colors.Blue.Medium);
+
+                page.Content()
+                    .PaddingVertical(1, Unit.Centimetre)
+                    .Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(2f); // Name
+                            columns.RelativeColumn(1.5f); // Category
+                            columns.RelativeColumn(1f); // Price
+                            columns.RelativeColumn(1f); // Stock
+                            columns.RelativeColumn(3f); // Description
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(CellStyle).Text("Nombre");
+                            header.Cell().Element(CellStyle).Text("Categoría");
+                            header.Cell().Element(CellStyle).Text("Precio");
+                            header.Cell().Element(CellStyle).Text("Stock");
+                            header.Cell().Element(CellStyle).Text("Descripción");
+
+                            static IContainer CellStyle(IContainer container)
+                            {
+                                return container.DefaultTextStyle(x => x.SemiBold()).PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Black);
+                            }
+                        });
+
+                        foreach (var product in products)
+                        {
+                            table.Cell().Element(CellStyle).Text(product.Name);
+                            table.Cell().Element(CellStyle).Text(product.Category);
+                            table.Cell().Element(CellStyle).Text($"${product.Price:F2}");
+                            table.Cell().Element(CellStyle).Text(product.Stock.ToString());
+                            table.Cell().Element(CellStyle).Text(product.Description ?? "-");
+
+                            static IContainer CellStyle(IContainer container)
+                            {
+                                return container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(5);
+                            }
+                        }
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(x =>
+                    {
+                        x.Span("Página ");
+                        x.CurrentPageNumber();
+                        x.Span($" | Generado el: {DateTime.Now:yyyy-MM-dd HH:mm}");
+                    });
+            });
+        });
+
+        var pdfBytes = document.GeneratePdf();
+        return Task.FromResult(pdfBytes);
+    }
 }
-
-
 

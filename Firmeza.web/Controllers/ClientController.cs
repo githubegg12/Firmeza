@@ -155,32 +155,41 @@ namespace Firmeza.web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToExcel()
         {
-            var clients = await _context.Clients.ToListAsync();
-
-            using (var package = new ExcelPackage())
+            try
             {
-                var worksheet = package.Workbook.Worksheets.Add("Clients");
-                worksheet.Cells[1, 1].Value = "ID";
-                worksheet.Cells[1, 2].Value = "Name";
-                worksheet.Cells[1, 3].Value = "Document";
-                worksheet.Cells[1, 4].Value = "Email";
-                worksheet.Cells[1, 5].Value = "Phone";
-                worksheet.Cells[1, 6].Value = "Address";
+                var clients = await _context.Clients.ToListAsync();
 
-                int row = 2;
-                foreach (var client in clients)
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using (var package = new ExcelPackage())
                 {
-                    worksheet.Cells[row, 1].Value = client.Id;
-                    worksheet.Cells[row, 2].Value = client.Name;
-                    worksheet.Cells[row, 3].Value = client.Document;
-                    worksheet.Cells[row, 4].Value = client.Email;
-                    worksheet.Cells[row, 5].Value = client.Phone;
-                    worksheet.Cells[row, 6].Value = client.Address;
-                    row++;
-                }
+                    var worksheet = package.Workbook.Worksheets.Add("Clients");
+                    worksheet.Cells[1, 1].Value = "ID";
+                    worksheet.Cells[1, 2].Value = "Name";
+                    worksheet.Cells[1, 3].Value = "Document";
+                    worksheet.Cells[1, 4].Value = "Email";
+                    worksheet.Cells[1, 5].Value = "Phone";
+                    worksheet.Cells[1, 6].Value = "Address";
 
-                var fileBytes = package.GetAsByteArray();
-                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Clients.xlsx");
+                    int row = 2;
+                    foreach (var client in clients)
+                    {
+                        worksheet.Cells[row, 1].Value = client.Id;
+                        worksheet.Cells[row, 2].Value = client.Name;
+                        worksheet.Cells[row, 3].Value = client.Document;
+                        worksheet.Cells[row, 4].Value = client.Email;
+                        worksheet.Cells[row, 5].Value = client.Phone;
+                        worksheet.Cells[row, 6].Value = client.Address;
+                        row++;
+                    }
+
+                    var fileBytes = package.GetAsByteArray();
+                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Clients.xlsx");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error exporting Excel: {ex}");
+                return BadRequest($"Error exporting Excel: {ex.Message}");
             }
         }
 
@@ -188,50 +197,58 @@ namespace Firmeza.web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToPdf()
         {
-            var clients = await _context.Clients.ToListAsync();
-
-            var document = Document.Create(container =>
+            try
             {
-                container.Page(page =>
+                var clients = await _context.Clients.ToListAsync();
+
+                var document = Document.Create(container =>
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(2, Unit.Centimetre);
-                    page.Header().Text("Clients Report").FontSize(20).Bold();
-
-                    page.Content().Table(table =>
+                    container.Page(page =>
                     {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.RelativeColumn(1);
-                            columns.RelativeColumn(2);
-                            columns.RelativeColumn(2);
-                            columns.RelativeColumn(2);
-                            columns.RelativeColumn(1);
-                        });
+                        page.Size(PageSizes.A4);
+                        page.Margin(2, Unit.Centimetre);
+                        page.Header().Text("Clients Report").FontSize(20).Bold();
 
-                        table.Header(header =>
+                        page.Content().Table(table =>
                         {
-                            header.Cell().Text("ID").Bold();
-                            header.Cell().Text("Name").Bold();
-                            header.Cell().Text("Email").Bold();
-                            header.Cell().Text("Phone").Bold();
-                            header.Cell().Text("Document").Bold();
-                        });
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1);
+                            });
 
-                        foreach (var client in clients)
-                        {
-                            table.Cell().Text(client.Id.ToString());
-                            table.Cell().Text(client.Name);
-                            table.Cell().Text(client.Email);
-                            table.Cell().Text(client.Phone);
-                            table.Cell().Text(client.Document);
-                        }
+                            table.Header(header =>
+                            {
+                                header.Cell().Text("ID").Bold();
+                                header.Cell().Text("Name").Bold();
+                                header.Cell().Text("Email").Bold();
+                                header.Cell().Text("Phone").Bold();
+                                header.Cell().Text("Document").Bold();
+                            });
+
+                            foreach (var client in clients)
+                            {
+                                table.Cell().Text(client.Id.ToString());
+                                table.Cell().Text(client.Name);
+                                table.Cell().Text(client.Email);
+                                table.Cell().Text(client.Phone);
+                                table.Cell().Text(client.Document);
+                            }
+                        });
                     });
                 });
-            });
 
-            var pdf = document.GeneratePdf();
-            return File(pdf, "application/pdf", "Clients.pdf");
+                var pdf = document.GeneratePdf();
+                return File(pdf, "application/pdf", "Clients.pdf");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error exporting PDF: {ex}");
+                return BadRequest($"Error exporting PDF: {ex.Message}");
+            }
         }
     }
 }

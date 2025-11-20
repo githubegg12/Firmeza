@@ -57,16 +57,16 @@ public class AccountController : Controller
 
         var roles = await _userManager.GetRolesAsync(user);
 
-        // Si existe ReturnUrl y es segura → úsala
-        if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-            return LocalRedirect(model.ReturnUrl);
-
-        // Redirección por roles
+        // Redirección por roles (prioridad sobre ReturnUrl)
         if (roles.Contains("Administrador"))
-            return RedirectToAction("Index", "Admin", new { area = "Admin" });
+            return RedirectToAction("Index", "Admin");
 
         if (roles.Contains("Cliente"))
             return RedirectToAction("Index", "Client", new { area = "Client" });
+
+        // Si existe ReturnUrl y es segura → úsala (solo si no tiene roles específicos)
+        if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl) && model.ReturnUrl != "/")
+            return LocalRedirect(model.ReturnUrl);
 
         // Usuario sin rol conocido → inicio
         return RedirectToAction("Index", "Home");

@@ -16,5 +16,10 @@ public interface IPdfService
     /// Genera un PDF a partir de un reporte
     /// </summary>
     Task<byte[]> GenerateReportPdfAsync(string reportContent);
+
+    /// <summary>
+    /// Genera un PDF con la lista de productos
+    /// </summary>
+    Task<byte[]> GenerateProductListPdfAsync(IEnumerable<Firmeza.Application.DTOs.ProductDto> products);
 }
 

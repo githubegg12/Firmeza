@@ -2,48 +2,124 @@
 
 @{
     ViewData["Title"] = "Productos";
+    Layout = "_AdminLayout";
 }
 
-<div class="container mt-5">
-    <h1>@ViewData["Title"]</h1>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-box-seam me-2"></i>Productos</h1>
+        <div>
+            <a asp-action="ExportToExcel" class="btn btn-success me-2" target="_blank">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
+            </a>
+            <a asp-action="ExportToPdf" class="btn btn-danger me-2" target="_blank">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Exportar PDF
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
 
-    <a href="/Products/Create" class="btn btn-primary mb-3">Nuevo Producto</a>
+    <!-- Search and Filter Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-5">
+                    <label for="searchString" class="form-label">Buscar</label>
+                    <input type="text" class="form-control" id="searchString" name="searchString" 
+                           value="@ViewData["CurrentFilter"]" placeholder="Buscar por nombre o descripción...">
+                </div>
+                <div class="col-md-4">
+                    <label for="categoryFilter" class="form-label">Categoría</label>
+                    <select class="form-select" id="categoryFilter" name="categoryFilter">
+                        <option value="">Todas las categorías</option>
+                        @foreach (var category in ViewBag.Categories as List<string>)
+                        {
+                            <option value="@category" selected="@(category == ViewData["CategoryFilter"]?.ToString())">@category</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search me-1"></i>Buscar
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    @if (Model.Any())
+    <!-- Products Table -->
+    @if (Model != null && Model.Any())
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var product in Model)
-                {
-                    <tr>
-                        <td>@product.Id</td>
-                        <td>@product.Name</td>
-                        <td>@product.Category</td>
-                        <td>$@product.Price.ToString("F2")</td>
-                        <td>@product.Stock</td>
-                        <td>
-                            <a href="/Products/Details/@product.Id" class="btn btn-info btn-sm">Ver</a>
-                            <a href="/Products/Edit/@product.Id" class="btn btn-warning btn-sm">Editar</a>
-                            <a href="/Products/Delete/@product.Id" class="btn btn-danger btn-sm">Eliminar</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Descripción</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-center">Stock</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model)
+                            {
+                                <tr>
+                                    <td>@product.Id</td>
+                                    <td><strong>@product.Name</strong></td>
+                                    <td><span class="badge bg-info">@product.Category</span></td>
+                                    <td>@(product.Description?.Length > 50 ? product.Description.Substring(0, 50) + "..." : product.Description)</td>
+                                    <td class="text-end"><strong>$@product.Price.ToString("N2")</strong></td>
+                                    <td class="text-center">
+                                        @if (product.Stock > 10)
+                                        {
+                                            <span class="badge bg-success">@product.Stock</span>
+                                        }
+                                        else if (product.Stock > 0)
+                                        {
+                                            <span class="badge bg-warning">@product.Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Agotado</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-warning" title="Editar">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-danger" title="Eliminar">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small>Total: @Model.Count() producto(s)</small>
+            </div>
+        </div>
     }
     else
     {
-        <p>No hay productos registrados.</p>
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            No se encontraron productos. <a asp-action="Create" class="alert-link">Crear el primer producto</a>
+        </div>
     }
 </div>
 

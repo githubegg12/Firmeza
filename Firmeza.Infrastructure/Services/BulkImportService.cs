@@ -46,8 +46,10 @@ public class BulkImportService : IBulkImportService
 
             for (int row = 2; row <= worksheet.Dimension.End.Row; row++)
             {
+                bool rowProcessed = false;
                 try
                 {
+                    // Extract potential data
                     var clientDocument = GetValue(worksheet, row, headers, "ClientDocument");
                     var clientName = GetValue(worksheet, row, headers, "ClientName");
                     var productName = GetValue(worksheet, row, headers, "ProductName");
@@ -55,78 +57,125 @@ public class BulkImportService : IBulkImportService
                     var quantityStr = GetValue(worksheet, row, headers, "Quantity");
                     var unitPriceStr = GetValue(worksheet, row, headers, "UnitPrice");
 
-                    if (string.IsNullOrWhiteSpace(clientDocument) || string.IsNullOrWhiteSpace(productName) ||
-                        !int.TryParse(quantityStr, out int quantity) || !decimal.TryParse(unitPriceStr, out decimal unitPrice))
+                    Client? client = null;
+                    Product? product = null;
+
+                    // --- 1. PROCESS CLIENT ---
+                    if (!string.IsNullOrWhiteSpace(clientDocument))
                     {
-                        result.LogMessages.Add($"Row {row}: SKIPPED. Missing required data.");
+                        client = await _context.Clients.FirstOrDefaultAsync(c => c.Document == clientDocument);
+                        if (client == null)
+                        {
+                            client = new Client
+                            {
+                                Document = clientDocument,
+                                Name = !string.IsNullOrWhiteSpace(clientName) ? clientName : "Unknown Client",
+                                Email = GetValue(worksheet, row, headers, "ClientEmail", $"{clientDocument}@example.com"),
+                                Phone = GetValue(worksheet, row, headers, "ClientPhone", ""),
+                                Address = GetValue(worksheet, row, headers, "ClientAddress", "")
+                            };
+                            _context.Clients.Add(client);
+                            result.LogMessages.Add($"Row {row}: [CLIENT] Creating new client '{client.Name}'");
+                            result.SuccessfulInserts++;
+                        }
+                        else
+                        {
+                            // Optional: Update client if new data is provided? For now, just log existence.
+                            // If we wanted to update, we would check if clientName is provided and different.
+                            if (!string.IsNullOrWhiteSpace(clientName) && client.Name != clientName)
+                            {
+                                client.Name = clientName;
+                                // Update other fields if needed
+                                result.LogMessages.Add($"Row {row}: [CLIENT] Updating existing client '{client.Name}'");
+                                result.SuccessfulUpdates++;
+                            }
+                            else
+                            {
+                                result.LogMessages.Add($"Row {row}: [CLIENT] Found existing client '{client.Name}'");
+                            }
+                        }
+                        rowProcessed = true;
+                    }
+
+                    // --- 2. PROCESS PRODUCT ---
+                    if (!string.IsNullOrWhiteSpace(productName))
+                    {
+                        product = await _context.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == productName.ToLower());
+                        
+                        decimal.TryParse(unitPriceStr, out decimal price);
+                        
+                        if (product == null)
+                        {
+                            product = new Product
+                            {
+                                Name = productName,
+                                Price = price > 0 ? price : 0,
+                                Stock = int.TryParse(GetValue(worksheet, row, headers, "Stock"), out int stock) ? stock : 100,
+                                Description = GetValue(worksheet, row, headers, "Description", "Auto-imported product"),
+                                Category = GetValue(worksheet, row, headers, "ProductCategory", "General")
+                            };
+                            _context.Products.Add(product);
+                            result.LogMessages.Add($"Row {row}: [PRODUCT] Creating new product '{product.Name}'");
+                            result.SuccessfulInserts++;
+                        }
+                        else
+                        {
+                            // Update price if provided and different
+                            if (price > 0 && product.Price != price)
+                            {
+                                product.Price = price;
+                                result.LogMessages.Add($"Row {row}: [PRODUCT] Updating price for '{product.Name}'");
+                                result.SuccessfulUpdates++;
+                            }
+                            else
+                            {
+                                result.LogMessages.Add($"Row {row}: [PRODUCT] Found existing product '{product.Name}'");
+                            }
+                        }
+                        rowProcessed = true;
+                    }
+
+                    // --- 3. PROCESS SALE (Requires Client + Product + Quantity + Price) ---
+                    if (client != null && product != null && 
+                        int.TryParse(quantityStr, out int quantity) && quantity > 0 &&
+                        decimal.TryParse(unitPriceStr, out decimal unitPrice) && unitPrice > 0)
+                    {
+                        // Need to ensure client and product are tracked/saved before using them in Sale?
+                        // EF Core handles this if they are added to context.
+                        
+                        var sale = new Sale
+                        {
+                            Client = client,
+                            SaleDate = DateTime.TryParse(saleDateStr, out var saleDate) ? saleDate : DateTime.Now,
+                            TotalAmount = quantity * unitPrice
+                        };
+
+                        var saleDetail = new SaleDetail
+                        {
+                            Sale = sale,
+                            Product = product,
+                            Quantity = quantity,
+                            UnitPrice = unitPrice
+                        };
+
+                        _context.Sales.Add(sale);
+                        _context.SaleDetails.Add(saleDetail);
+                        
+                        result.LogMessages.Add($"Row {row}: [SALE] Registered sale for '{client.Name}' - Item: '{product.Name}'");
+                        result.SuccessfulInserts++;
+                        rowProcessed = true;
+                    }
+                    else if (client != null && product != null)
+                    {
+                         // Had client and product but missing sale details
+                         result.LogMessages.Add($"Row {row}: [INFO] Client and Product present, but missing Quantity/Price for Sale.");
+                    }
+
+                    if (!rowProcessed)
+                    {
+                        result.LogMessages.Add($"Row {row}: SKIPPED. No valid Client Document or Product Name found.");
                         result.FailedRows++;
-                        continue;
                     }
-
-                    // Process Client
-                    var client = await _context.Clients.FirstOrDefaultAsync(c => c.Document == clientDocument);
-                    if (client == null)
-                    {
-                        client = new Client
-                        {
-                            Document = clientDocument,
-                            Name = clientName ?? "Unknown Client",
-                            Email = GetValue(worksheet, row, headers, "ClientEmail", $"{clientDocument}@example.com"),
-                            Phone = GetValue(worksheet, row, headers, "ClientPhone", ""),
-                            Address = GetValue(worksheet, row, headers, "ClientAddress", "")
-                        };
-                        _context.Clients.Add(client);
-                        result.LogMessages.Add($"Row {row}: INSERTING new client: {client.Name}");
-                        result.SuccessfulInserts++;
-                    }
-                    else
-                    {
-                        result.LogMessages.Add($"Row {row}: Existing client found: {client.Name}");
-                        result.SuccessfulUpdates++;
-                    }
-
-                    // Process Product
-                    var product = await _context.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == productName.ToLower());
-                    if (product == null)
-                    {
-                        product = new Product
-                        {
-                            Name = productName,
-                            Price = unitPrice,
-                            Stock = 100,
-                            Description = "Auto-imported product",
-                            Category = GetValue(worksheet, row, headers, "ProductCategory", "General")
-                        };
-                        _context.Products.Add(product);
-                        result.LogMessages.Add($"Row {row}: INSERTING new product: {product.Name}");
-                        result.SuccessfulInserts++;
-                    }
-                    else
-                    {
-                        result.LogMessages.Add($"Row {row}: Existing product found: {product.Name}");
-                    }
-
-                    // Create Sale
-                    var sale = new Sale
-                    {
-                        Client = client,
-                        SaleDate = DateTime.TryParse(saleDateStr, out var saleDate) ? saleDate : DateTime.Now,
-                        TotalAmount = quantity * unitPrice
-                    };
-
-                    var saleDetail = new SaleDetail
-                    {
-                        Sale = sale,
-                        Product = product,
-                        Quantity = quantity,
-                        UnitPrice = unitPrice
-                    };
-
-                    _context.Sales.Add(sale);
-                    _context.SaleDetails.Add(saleDetail);
-                    
-                    result.LogMessages.Add($"Row {row}: Sale created for {client.Name}");
-                    result.SuccessfulInserts++;
                 }
                 catch (Exception ex)
                 {
@@ -136,7 +185,7 @@ public class BulkImportService : IBulkImportService
             }
 
             await _context.SaveChangesAsync();
-            result.LogMessages.Add($"Import completed: {result.SuccessfulInserts} inserted, {result.FailedRows} skipped.");
+            result.LogMessages.Add($"Import completed. Processed {result.TotalRows} rows.");
         }
         catch (Exception ex)
         {

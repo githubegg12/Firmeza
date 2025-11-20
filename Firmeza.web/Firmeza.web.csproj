@@ -12,6 +12,7 @@
         EF Core and Identity packages are infrastructure concerns.
       -->
       <PackageReference Include="EPPlus" Version="7.1.2" />
+      <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="7.3.0.2" />
       <PackageReference Include="QuestPDF" Version="2023.12.6" />
 
       <!--
@@ -22,6 +23,7 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+      <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.8" />
     </ItemGroup>
 
     <ItemGroup>

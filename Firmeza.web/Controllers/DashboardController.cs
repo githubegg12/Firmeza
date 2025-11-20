@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Firmeza.web.Controllers;
 
-[Authorize(Policy = "RequireAdminRole")]
+[Authorize(Roles = "Administrador")]
 public class DashboardController : Microsoft.AspNetCore.Mvc.Controller
 {
     private readonly IClientService _clientService;

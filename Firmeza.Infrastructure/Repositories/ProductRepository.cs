@@ -39,7 +39,7 @@ namespace Firmeza.Infrastructure.Repositories;
         public async Task AddAsync(Product product)
         {
             await _context.Products.AddAsync(product);
-            // El guardado se delega al Unit of Work
+            await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Firmeza.Infrastructure.Repositories;
         public async Task UpdateAsync(Product product)
         {
             _context.Products.Update(product);
-            await Task.CompletedTask; // Se mantiene async, pero no guarda
+            await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -57,6 +57,6 @@ namespace Firmeza.Infrastructure.Repositories;
         public async Task DeleteAsync(Product product)
         {
             _context.Products.Remove(product);
-            await Task.CompletedTask; // Se mantiene async, pero no guarda
+            await _context.SaveChangesAsync();
         }
     }

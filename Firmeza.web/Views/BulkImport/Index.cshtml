@@ -1,10 +1,29 @@
+@model Firmeza.Application.DTOs.BulkImportResultDto
 @{
+    Layout = "_AdminLayout";
     ViewData["Title"] = "BulkImport";
 }
 
 <div class="container mt-5">
     <h1>@ViewData["Title"]</h1>
-    <p>Importa datos masivos desde un archivo Excel.</p>
+    <p class="lead">Importación Inteligente de Datos</p>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Instrucciones de Formato</h5>
+        </div>
+        <div class="card-body">
+            <p>El sistema detecta automáticamente qué información contiene tu Excel. Puedes subir:</p>
+            <ul>
+                <li><strong>Solo Clientes:</strong> Requiere columna <code>ClientDocument</code>. (Opcional: <code>ClientName</code>, <code>ClientEmail</code>)</li>
+                <li><strong>Solo Productos:</strong> Requiere columna <code>ProductName</code>. (Opcional: <code>UnitPrice</code>, <code>ProductCategory</code>)</li>
+                <li><strong>Ventas Completas:</strong> Requiere <code>ClientDocument</code> + <code>ProductName</code> + <code>Quantity</code> + <code>UnitPrice</code>.</li>
+            </ul>
+            <div class="alert alert-secondary">
+                <small><i class="bi bi-lightbulb"></i> <strong>Tip:</strong> No necesitas llenar todas las columnas. Si solo quieres actualizar precios de productos, sube un Excel con <code>ProductName</code> y <code>UnitPrice</code>.</small>
+            </div>
+        </div>
+    </div>
 
     @if (Model != null)
     {
@@ -25,12 +44,21 @@
         </ul>
     }
 
-    <form method="post" enctype="multipart/form-data" class="mt-4">
-        <div class="form-group">
-            <label for="excelFile">Selecciona archivo Excel:</label>
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    <form action="/BulkImport/Upload" method="post" enctype="multipart/form-data" class="mt-4">
+        <div class="form-group mb-3">
+            <label for="excelFile" class="form-label">Selecciona archivo Excel:</label>
             <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx,.xls" required />
         </div>
-        <button type="submit" class="btn btn-primary">Importar</button>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-2"></i>Importar
+        </button>
     </form>
 </div>
 

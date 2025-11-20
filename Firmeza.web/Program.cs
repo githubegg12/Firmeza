@@ -1,8 +1,12 @@
 using Firmeza.Application.Interfaces;
 using Firmeza.Infrastructure;
 
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure QuestPDF License
+QuestPDF.Settings.License = LicenseType.Community;
 
 // --- Service Registration ---
 builder.Services.AddInfrastructure(builder.Configuration); 
