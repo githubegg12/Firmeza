@@ -18,6 +18,22 @@
         </a>
     </div>
 
+    @* ✅ MENSAJES DE ERROR/ÉXITO *@
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <div class="row justify-content-center">
         <div class="col-xl-8 col-lg-10">
             <div class="card shadow mb-4">
@@ -46,15 +62,20 @@
                         <div class="mb-4">
                             <label for="productId" class="form-label fw-bold">Producto</label>
                             <select name="productId" id="productId" class="form-select" required onchange="updatePrice()">
-                                <option value="" data-price="0">Seleccione un producto...</option>
+                                <option value="" data-price="0" data-stock="0">Seleccione un producto...</option>
                                 @if (products != null)
                                 {
                                     foreach (var product in products)
                                     {
-                                        <option value="@product.Id" data-price="@product.Price">@product.Name - $@product.Price</option>
+                                        var stockClass = product.Stock > 0 ? "" : "text-danger";
+                                        var stockText = product.Stock > 0 ? $"(Stock: {product.Stock})" : "(SIN STOCK)";
+                                        <option value="@product.Id" data-price="@product.Price" data-stock="@product.Stock" class="@stockClass">
+                                            @product.Name - $@product.Price @stockText
+                                        </option>
                                     }
                                 }
                             </select>
+                            <div class="form-text" id="stockInfo">Seleccione un producto para ver el stock disponible.</div>
                         </div>
 
                         <div class="row mb-4">
@@ -87,15 +108,57 @@
 @section Scripts {
     <script>
         function updatePrice() {
+            var selectedOption = $("#productId option:selected");
+            var stock = parseInt(selectedOption.data("stock")) || 0;
+            
+            // Actualizar información de stock
+            if (stock > 0) {
+                $("#stockInfo").html(`<span class="text-success"><i class="bi bi-check-circle"></i> Stock disponible: ${stock} unidades</span>`);
+            } else {
+                $("#stockInfo").html(`<span class="text-danger"><i class="bi bi-x-circle"></i> Producto sin stock</span>`);
+            }
+            
+            // Actualizar cantidad máxima permitida
+            $("#quantity").attr("max", stock);
+            
             updateTotal();
         }
 
         function updateTotal() {
             var price = parseFloat($("#productId option:selected").data("price")) || 0;
             var quantity = parseInt($("#quantity").val()) || 0;
+            var stock = parseInt($("#productId option:selected").data("stock")) || 0;
+            
+            // Validar que no exceda el stock
+            if (quantity > stock) {
+                $("#quantity").val(stock);
+                quantity = stock;
+                if (stock > 0) {
+                    alert(`La cantidad no puede exceder el stock disponible (${stock})`);
+                }
+            }
+            
             var total = price * quantity;
             $("#totalPreview").val(total.toFixed(2));
         }
+
+        // Validar antes de enviar el formulario
+        $("form").on("submit", function(e) {
+            var stock = parseInt($("#productId option:selected").data("stock")) || 0;
+            var quantity = parseInt($("#quantity").val()) || 0;
+            
+            if (stock === 0) {
+                e.preventDefault();
+                alert("No se puede crear una venta con un producto sin stock.");
+                return false;
+            }
+            
+            if (quantity > stock) {
+                e.preventDefault();
+                alert(`La cantidad solicitada (${quantity}) excede el stock disponible (${stock}).`);
+                return false;
+            }
+        });
     </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

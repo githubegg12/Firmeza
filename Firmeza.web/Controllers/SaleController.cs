@@ -63,8 +63,23 @@ namespace Firmeza.web.Controllers
 
             if (client == null || product == null || quantity <= 0)
             {
-                return BadRequest("Invalid client, product, or quantity.");
+                TempData["Error"] = "Cliente, producto o cantidad inválidos.";
+                ViewData["Clients"] = await _context.Clients.ToListAsync();
+                ViewData["Products"] = await _context.Products.ToListAsync();
+                return View();
             }
+
+            // ✅ VALIDACIÓN DE STOCK
+            if (product.Stock < quantity)
+            {
+                TempData["Error"] = $"Stock insuficiente. Disponible: {product.Stock}, Solicitado: {quantity}";
+                ViewData["Clients"] = await _context.Clients.ToListAsync();
+                ViewData["Products"] = await _context.Products.ToListAsync();
+                return View();
+            }
+
+            // ✅ DESCONTAR STOCK
+            product.Stock -= quantity;
 
             var sale = new Sale
             {
@@ -78,8 +93,10 @@ namespace Firmeza.web.Controllers
             };
 
             _context.Sales.Add(sale);
+            _context.Products.Update(product); // Actualizar producto con nuevo stock
             await _context.SaveChangesAsync();
 
+            TempData["Success"] = $"Venta creada exitosamente. Stock restante: {product.Stock}";
             return RedirectToAction(nameof(Index));
         }
 
@@ -110,43 +127,84 @@ namespace Firmeza.web.Controllers
         {
             var sale = await _context.Sales
                 .Include(s => s.SaleDetails)
+                .ThenInclude(sd => sd.Product)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (sale == null)
                 return NotFound();
 
             var client = await _context.Clients.FindAsync(clientId);
-            var product = await _context.Products.FindAsync(productId);
+            var newProduct = await _context.Products.FindAsync(productId);
 
-            if (client == null || product == null || quantity <= 0)
+            if (client == null || newProduct == null || quantity <= 0)
             {
-                return BadRequest("Invalid client, product, or quantity.");
+                TempData["Error"] = "Cliente, producto o cantidad inválidos.";
+                ViewData["Clients"] = await _context.Clients.ToListAsync();
+                ViewData["Products"] = await _context.Products.ToListAsync();
+                return View(sale);
+            }
+
+            // Obtener el detalle anterior
+            var oldDetail = sale.SaleDetails.FirstOrDefault();
+            
+            if (oldDetail != null)
+            {
+                var oldProduct = oldDetail.Product;
+                var oldQuantity = oldDetail.Quantity;
+
+                // ✅ RESTAURAR STOCK DEL PRODUCTO ANTERIOR
+                oldProduct.Stock += oldQuantity;
+                _context.Products.Update(oldProduct);
+
+                // ✅ VALIDAR STOCK DEL NUEVO PRODUCTO
+                if (newProduct.Stock < quantity)
+                {
+                    TempData["Error"] = $"Stock insuficiente para {newProduct.Name}. Disponible: {newProduct.Stock}, Solicitado: {quantity}";
+                    ViewData["Clients"] = await _context.Clients.ToListAsync();
+                    ViewData["Products"] = await _context.Products.ToListAsync();
+                    
+                    // Revertir el cambio de stock del producto anterior
+                    oldProduct.Stock -= oldQuantity;
+                    return View(sale);
+                }
+
+                // ✅ DESCONTAR STOCK DEL NUEVO PRODUCTO
+                newProduct.Stock -= quantity;
+                _context.Products.Update(newProduct);
+
+                // Actualizar el detalle
+                oldDetail.Product = newProduct;
+                oldDetail.Quantity = quantity;
+                oldDetail.UnitPrice = newProduct.Price;
+            }
+            else
+            {
+                // Caso raro: no hay detalle previo
+                if (newProduct.Stock < quantity)
+                {
+                    TempData["Error"] = $"Stock insuficiente. Disponible: {newProduct.Stock}, Solicitado: {quantity}";
+                    ViewData["Clients"] = await _context.Clients.ToListAsync();
+                    ViewData["Products"] = await _context.Products.ToListAsync();
+                    return View(sale);
+                }
+
+                newProduct.Stock -= quantity;
+                _context.Products.Update(newProduct);
+
+                sale.SaleDetails = new[]
+                {
+                    new SaleDetail { Product = newProduct, Quantity = quantity, UnitPrice = newProduct.Price }
+                };
             }
 
             // Update Sale
             sale.Client = client;
-            sale.TotalAmount = product.Price * quantity;
-            
-            // Update Detail (Assuming single product per sale for now)
-            var detail = sale.SaleDetails.FirstOrDefault();
-            if (detail != null)
-            {
-                detail.Product = product;
-                detail.Quantity = quantity;
-                detail.UnitPrice = product.Price;
-            }
-            else
-            {
-                // Should not happen based on Create logic, but handle just in case
-                sale.SaleDetails = new[]
-                {
-                    new SaleDetail { Product = product, Quantity = quantity, UnitPrice = product.Price }
-                };
-            }
+            sale.TotalAmount = newProduct.Price * quantity;
 
             _context.Update(sale);
             await _context.SaveChangesAsync();
 
+            TempData["Success"] = $"Venta actualizada exitosamente. Stock de {newProduct.Name}: {newProduct.Stock}";
             return RedirectToAction(nameof(Index));
         }
 
@@ -171,11 +229,25 @@ namespace Firmeza.web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var sale = await _context.Sales.FindAsync(id);
+            var sale = await _context.Sales
+                .Include(s => s.SaleDetails)
+                .ThenInclude(sd => sd.Product)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (sale != null)
             {
+                // ✅ RESTAURAR STOCK DE LOS PRODUCTOS
+                foreach (var detail in sale.SaleDetails)
+                {
+                    var product = detail.Product;
+                    product.Stock += detail.Quantity;
+                    _context.Products.Update(product);
+                }
+
                 _context.Sales.Remove(sale);
                 await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Venta eliminada y stock restaurado exitosamente.";
             }
             return RedirectToAction(nameof(Index));
         }

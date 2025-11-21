@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using IBulkImportService = Firmeza.Application.Features.BulkImport.IBulkImportService;
 using IdentityOptions = Firmeza.Identity.Configurations.IdentityOptions;
 using IPdfService = Firmeza.Application.Features.Pdf.IPdfService;
+using IEmailService = Firmeza.Application.Interfaces.IEmailService;
 
 namespace Firmeza.Infrastructure;
 
@@ -72,6 +73,7 @@ public static class DependencyInjection
         // -------------------------
         services.AddScoped<IBulkImportService, BulkImportService>();
         services.AddScoped<IPdfService, PdfService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
 
         // -------------------------
         // Register Authentication Service
