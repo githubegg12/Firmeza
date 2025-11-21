@@ -146,8 +146,8 @@ public class AuthController : ControllerBase
                 });
             }
 
-            // Assign role (default: Cliente)
-            var role = string.IsNullOrEmpty(request.Role) ? "Cliente" : request.Role;
+            // Assign role - all new registrations are automatically "Cliente"
+            const string role = "Cliente";
             await _userManager.AddToRoleAsync(user, role);
 
             // Send welcome email (fire and forget)

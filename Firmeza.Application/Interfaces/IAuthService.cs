@@ -11,9 +11,9 @@ public interface IAuthService
     Task<AuthResult> RegisterAsync(string username, string email, string password, string role);
 
     /// <summary>
-    /// Realiza el inicio de sesión con usuario y contraseña.
+    /// Realiza el inicio de sesión con email y contraseña.
     /// </summary>
-    Task<AuthResult> SignInAsync(string username, string password, bool rememberMe);
+    Task<AuthResult> SignInAsync(string email, string password, bool rememberMe);
 
     /// <summary>
     /// Cierra la sesión del usuario actual.

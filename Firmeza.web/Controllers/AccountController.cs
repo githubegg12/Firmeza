@@ -39,19 +39,19 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var result = await _authService.SignInAsync(model.Username, model.Password, false);
+        var result = await _authService.SignInAsync(model.Email, model.Password, model.RememberMe);
 
         if (!result.Success)
         {
-            ModelState.AddModelError("", result.Errors?.FirstOrDefault() ?? "Invalid username or password.");
+            ModelState.AddModelError("", result.Errors?.FirstOrDefault() ?? "Email o contraseña inválidos.");
             return View(model);
         }
 
-        var user = await _userManager.FindByNameAsync(model.Username);
+        var user = await _userManager.FindByEmailAsync(model.Email);
 
         if (user == null)
         {
-            ModelState.AddModelError("", "Unexpected error: user not found after login.");
+            ModelState.AddModelError("", "Error inesperado: usuario no encontrado después del login.");
             return View(model);
         }
 
@@ -104,7 +104,7 @@ public class AccountController : Controller
         }
 
         // Auto login después del registro
-        await _authService.SignInAsync(model.Username, model.Password, false);
+        await _authService.SignInAsync(model.Email, model.Password, false);
 
         return RedirectToAction("Index", "Client");
     }

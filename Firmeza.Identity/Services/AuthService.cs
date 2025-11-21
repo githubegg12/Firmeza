@@ -62,15 +62,16 @@ public class AuthService : IAuthService
         return result;
     }
 
-    public async Task<AuthResult> SignInAsync(string username, string password, bool rememberMe)
+    public async Task<AuthResult> SignInAsync(string email, string password, bool rememberMe)
     {
         var result = new AuthResult();
 
-        var user = await _userManager.FindByNameAsync(username);
+        // Find user by email instead of username
+        var user = await _userManager.FindByEmailAsync(email);
         if (user == null)
         {
             result.Success = false;
-            result.Errors = new[] { "Usuario o contraseña inválidos" };
+            result.Errors = new[] { "Email o contraseña inválidos" };
             return result;
         }
 
@@ -78,7 +79,7 @@ public class AuthService : IAuthService
         if (!signInResult.Succeeded)
         {
             result.Success = false;
-            result.Errors = new[] { "Usuario o contraseña inválidos" };
+            result.Errors = new[] { "Email o contraseña inválidos" };
             return result;
         }
 

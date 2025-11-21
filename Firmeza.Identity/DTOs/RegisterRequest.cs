@@ -20,9 +20,4 @@ public class RegisterRequest
 
     [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
     public string ConfirmPassword { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Role to assign to the user (default: Cliente)
-    /// </summary>
-    public string Role { get; set; } = "Cliente";
 }

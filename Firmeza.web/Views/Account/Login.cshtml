@@ -3,26 +3,51 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <h1>Iniciar Sesión</h1>
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                    </h2>
 
-            <form method="post" asp-action="Login">
-                
-                @await Html.PartialAsync("_UserFieldsPartial", new Firmeza.web.ViewModels.UserFieldsViewModel
-                {
-                    IncludeEmail = false,
-                    IncludeConfirmPassword = false
-                })
+                    <form method="post" asp-action="Login">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                <input type="hidden" asp-for="ReturnUrl" />
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" placeholder="ejemplo@correo.com" autofocus />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
 
-                <button type="submit" class="btn btn-primary mt-3 w-100">Entrar</button>
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
 
-                <p class="mt-3">
-                    ¿Aún no tienes cuenta?
-                    <a asp-action="Register">Regístrate aquí</a>
-                </p>
+                        <div class="form-check mb-3">
+                            <input asp-for="RememberMe" class="form-check-input" type="checkbox" />
+                            <label asp-for="RememberMe" class="form-check-label"></label>
+                        </div>
 
-            </form>
+                        <input type="hidden" asp-for="ReturnUrl" />
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+                        </button>
+
+                        <div class="text-center">
+                            <p class="mb-0">
+                                ¿Aún no tienes cuenta?
+                                <a asp-action="Register" class="text-decoration-none">Regístrate aquí</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
