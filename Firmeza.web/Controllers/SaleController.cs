@@ -13,6 +13,11 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Firmeza.web.Controllers
 {
+    /// <summary>
+    /// Admin panel controller for sales management
+    /// Handles CRUD operations with automatic stock management
+    /// Sends purchase confirmation emails to clients
+    /// </summary>
     [Authorize(Roles = "Administrador")]
     public class SaleController : Controller
     {
@@ -29,14 +34,19 @@ namespace Firmeza.web.Controllers
             _userManager = userManager;
         }
 
-        // GET: Sales
+        /// <summary>
+        /// Displays list of all sales with user information
+        /// </summary>
         public async Task<IActionResult> Index()
         {
             var sales = await _context.Sales.Include(s => s.User).ToListAsync();
             return View(sales);
         }
 
-        // GET: Sales/Details/5
+        /// <summary>
+        /// Displays detailed information for a specific sale
+        /// Includes user, sale details, and product information
+        /// </summary>
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -54,7 +64,10 @@ namespace Firmeza.web.Controllers
             return View(sale);
         }
 
-        // GET: Sales/Create
+        /// <summary>
+        /// Displays the sale creation form
+        /// Populates dropdowns with clients and products
+        /// </summary>
         public async Task<IActionResult> Create()
         {
             var users = await _userManager.GetUsersInRoleAsync("Cliente");
@@ -63,7 +76,13 @@ namespace Firmeza.web.Controllers
             return View();
         }
 
-        // POST: Sales/Create
+        /// <summary>
+        /// Processes sale creation with stock validation and deduction
+        /// Sends purchase confirmation email to the client
+        /// </summary>
+        /// <param name="userId">Client user ID</param>
+        /// <param name="productId">Product ID to sell</param>
+        /// <param name="quantity">Quantity to sell</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(string userId, int productId, int quantity)
@@ -80,7 +99,7 @@ namespace Firmeza.web.Controllers
                 return View();
             }
 
-            // ✅ VALIDACIÓN DE STOCK
+            // Stock validation
             if (product.Stock < quantity)
             {
                 TempData["Error"] = $"Stock insuficiente. Disponible: {product.Stock}, Solicitado: {quantity}";
@@ -90,7 +109,7 @@ namespace Firmeza.web.Controllers
                 return View();
             }
 
-            // ✅ DESCONTAR STOCK
+            // Deduct stock
             product.Stock -= quantity;
 
             var sale = new Sale
@@ -106,7 +125,7 @@ namespace Firmeza.web.Controllers
             };
 
             _context.Sales.Add(sale);
-            _context.Products.Update(product); // Actualizar producto con nuevo stock
+            _context.Products.Update(product); // Update product with new stock
             await _context.SaveChangesAsync();
 
             // Send purchase confirmation email
@@ -132,7 +151,10 @@ namespace Firmeza.web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Sales/Edit/5
+        /// <summary>
+        /// Displays the sale edit form
+        /// Loads current sale data with related entities
+        /// </summary>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -153,7 +175,14 @@ namespace Firmeza.web.Controllers
             return View(sale);
         }
 
-        // POST: Sales/Edit/5
+        /// <summary>
+        /// Processes sale update with stock management
+        /// Restores stock from old product and deducts from new product
+        /// </summary>
+        /// <param name="id">Sale ID</param>
+        /// <param name="userId">New client user ID</param>
+        /// <param name="productId">New product ID</param>
+        /// <param name="quantity">New quantity</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, string userId, int productId, int quantity)
@@ -178,7 +207,7 @@ namespace Firmeza.web.Controllers
                 return View(sale);
             }
 
-            // Obtener el detalle anterior
+            // Get previous sale detail
             var oldDetail = sale.SaleDetails.FirstOrDefault();
             
             if (oldDetail != null)
@@ -186,11 +215,11 @@ namespace Firmeza.web.Controllers
                 var oldProduct = oldDetail.Product;
                 var oldQuantity = oldDetail.Quantity;
 
-                // ✅ RESTAURAR STOCK DEL PRODUCTO ANTERIOR
+                // Restore stock from old product
                 oldProduct.Stock += oldQuantity;
                 _context.Products.Update(oldProduct);
 
-                // ✅ VALIDAR STOCK DEL NUEVO PRODUCTO
+                // Validate stock for new product
                 if (newProduct.Stock < quantity)
                 {
                     TempData["Error"] = $"Stock insuficiente para {newProduct.Name}. Disponible: {newProduct.Stock}, Solicitado: {quantity}";
@@ -198,23 +227,23 @@ namespace Firmeza.web.Controllers
                     ViewData["Users"] = users.ToList();
                     ViewData["Products"] = await _context.Products.ToListAsync();
                     
-                    // Revertir el cambio de stock del producto anterior
+                    // Revert stock change for old product
                     oldProduct.Stock -= oldQuantity;
                     return View(sale);
                 }
 
-                // ✅ DESCONTAR STOCK DEL NUEVO PRODUCTO
+                // Deduct stock from new product
                 newProduct.Stock -= quantity;
                 _context.Products.Update(newProduct);
 
-                // Actualizar el detalle
+                // Update sale detail
                 oldDetail.Product = newProduct;
                 oldDetail.Quantity = quantity;
                 oldDetail.UnitPrice = newProduct.Price;
             }
             else
             {
-                // Caso raro: no hay detalle previo
+                // Rare case: no previous detail
                 if (newProduct.Stock < quantity)
                 {
                     TempData["Error"] = $"Stock insuficiente. Disponible: {newProduct.Stock}, Solicitado: {quantity}";
@@ -245,7 +274,9 @@ namespace Firmeza.web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Sales/Delete/5
+        /// <summary>
+        /// Displays sale deletion confirmation page
+        /// </summary>
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -261,7 +292,9 @@ namespace Firmeza.web.Controllers
             return View(sale);
         }
 
-        // POST: Sales/Delete/5
+        /// <summary>
+        /// Processes sale deletion and restores stock for all products
+        /// </summary>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -273,7 +306,7 @@ namespace Firmeza.web.Controllers
 
             if (sale != null)
             {
-                // ✅ RESTAURAR STOCK DE LOS PRODUCTOS
+                // Restore stock for all products in the sale
                 foreach (var detail in sale.SaleDetails)
                 {
                     var product = detail.Product;
@@ -289,7 +322,10 @@ namespace Firmeza.web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Export Sale to PDF
+        /// <summary>
+        /// Exports a sale to PDF format with all details
+        /// Uses QuestPDF service for document generation
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ExportToPdf(int id)
         {

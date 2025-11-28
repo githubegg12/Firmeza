@@ -6,19 +6,30 @@ using Firmeza.Application.Features.Product.Interfaces;
 namespace Firmeza.Application.Features.Product.Commands;
 
 /// <summary>
-/// Implementation of create product command
+/// Command handler for creating new products in the system.
+/// Implements the Command pattern to encapsulate product creation logic.
 /// </summary>
 public class CreateProductCommand : ICreateProductCommand
 {
     private readonly IProductRepository _repository;
 
+    /// <summary>
+    /// Initializes a new instance of the CreateProductCommand class.
+    /// </summary>
+    /// <param name="repository">The product repository for data access.</param>
     public CreateProductCommand(IProductRepository repository)
     {
         _repository = repository;
     }
 
+    /// <summary>
+    /// Executes the product creation command asynchronously.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing product information.</param>
+    /// <returns>A ProductDto representing the newly created product with its assigned ID.</returns>
     public async Task<ProductDto> ExecuteAsync(CreateProductDto dto)
     {
+        // Map DTO to domain entity
         var product = new ProductEntity
         {
             Name = dto.Name,
@@ -29,8 +40,10 @@ public class CreateProductCommand : ICreateProductCommand
             ImageUrl = dto.ImageUrl
         };
 
+        // Persist to database
         await _repository.AddAsync(product);
 
+        // Map entity back to DTO for response
         return new ProductDto
         {
             Id = product.Id,

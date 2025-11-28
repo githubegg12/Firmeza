@@ -19,6 +19,9 @@ namespace Firmeza.Infrastructure.Repositories
             _context = context;
         }
 
+        /// <summary>
+        /// Retrieves all sales with related user and product details (read-only)
+        /// </summary>
         public async Task<IEnumerable<Sale>> GetAllAsync()
         {
             return await _context.Sales
@@ -29,6 +32,9 @@ namespace Firmeza.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Finds a sale by ID with all related entities loaded
+        /// </summary>
         public async Task<Sale?> GetByIdAsync(int id)
         {
             return await _context.Sales
@@ -38,18 +44,27 @@ namespace Firmeza.Infrastructure.Repositories
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
+        /// <summary>
+        /// Adds a new sale to the database
+        /// </summary>
         public async Task AddAsync(Sale sale)
         {
             await _context.Sales.AddAsync(sale);
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Updates an existing sale
+        /// </summary>
         public async Task UpdateAsync(Sale sale)
         {
             _context.Sales.Update(sale);
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Deletes a sale from the database
+        /// </summary>
         public async Task DeleteAsync(Sale sale)
         {
             _context.Sales.Remove(sale);

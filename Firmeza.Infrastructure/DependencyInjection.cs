@@ -21,8 +21,19 @@ using IEmailService = Firmeza.Application.Features.Email.Interfaces.IEmailServic
 
 namespace Firmeza.Infrastructure;
 
+/// <summary>
+/// Extension methods for registering Infrastructure layer services
+/// Centralizes all dependency injection configuration for the Infrastructure layer
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Adds all Infrastructure services to the dependency injection container
+    /// Includes DbContext, Identity, Repositories, and custom services
+    /// </summary>
+    /// <param name="services">The service collection to add services to</param>
+    /// <param name="configuration">Application configuration containing connection strings and settings</param>
+    /// <returns>The service collection for method chaining</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
@@ -45,24 +56,25 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         // -------------------------
-        // Configure Application Cookie
+        // Configure Application Cookie for web authentication
         // -------------------------
         services.ConfigureApplicationCookie(options =>
         {
             options.LoginPath = "/Account/Login";
             options.AccessDeniedPath = "/Account/AccessDenied";
             options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-            options.SlidingExpiration = true;
+            options.SlidingExpiration = true; // Extends cookie lifetime on each request
         });
 
         // -------------------------
-        // Register Repositories
+        // Register Repositories (Data Access Layer)
         // -------------------------
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ISaleRepository, SaleRepository>();
 
         // -------------------------
         // Register Product Features (Commands & Queries)
+        // Using CQRS pattern for product operations
         // -------------------------
         services.AddScoped<ICreateProductCommand, CreateProductCommand>();
         services.AddScoped<IUpdateProductCommand, UpdateProductCommand>();
@@ -71,7 +83,7 @@ public static class DependencyInjection
 
 
         // -------------------------
-        // Register Custom Services
+        // Register Custom Services (Business Logic Layer)
         // -------------------------
         services.AddScoped<IProductMetricsService, ProductMetricsService>();
         services.AddScoped<ISaleService, SaleService>();

@@ -2,6 +2,7 @@ using AutoMapper;
 using Firmeza.Application.DTOs.Sale;
 using Firmeza.Domain.Entities;
 using Firmeza.Domain.Interfaces;
+using Firmeza.Application.Features.Email.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -24,19 +25,22 @@ public class SalesController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IMapper _mapper;
     private readonly ILogger<SalesController> _logger;
+    private readonly IEmailService _emailService;
 
     public SalesController(
         ISaleRepository saleRepository,
         IProductRepository productRepository,
         UserManager<ApplicationUser> userManager,
         IMapper mapper,
-        ILogger<SalesController> logger)
+        ILogger<SalesController> logger,
+        IEmailService emailService)
     {
         _saleRepository = saleRepository;
         _productRepository = productRepository;
         _userManager = userManager;
         _mapper = mapper;
         _logger = logger;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -156,8 +160,13 @@ public class SalesController : ControllerBase
             };
 
             decimal totalAmount = 0;
+            
+            // Build email content for order details
+            var orderDetailsBuilder = new System.Text.StringBuilder();
+            orderDetailsBuilder.AppendLine("<table style='width: 100%; border-collapse: collapse;'>");
+            orderDetailsBuilder.AppendLine("<tr style='background-color: #f2f2f2;'><th>Producto</th><th>Cant.</th><th>Precio</th><th>Total</th></tr>");
 
-            // Process each item
+            // Process each item in the sale
             foreach (var itemDto in createDto.Items)
             {
                 var product = await _productRepository.GetByIdAsync(itemDto.ProductId);
@@ -166,7 +175,7 @@ public class SalesController : ControllerBase
                     return BadRequest($"Producto con ID {itemDto.ProductId} no encontrado");
                 }
 
-                // Validate stock
+                // Validate stock availability
                 if (product.Stock < itemDto.Quantity)
                 {
                     return BadRequest($"Stock insuficiente para {product.Name}. Disponible: {product.Stock}, Solicitado: {itemDto.Quantity}");
@@ -186,15 +195,35 @@ public class SalesController : ControllerBase
                 // Update product stock
                 product.Stock -= itemDto.Quantity;
                 await _productRepository.UpdateAsync(product);
+
+                // Add item details to email content
+                orderDetailsBuilder.AppendLine($"<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{product.Name}</td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center;'>{itemDto.Quantity}</td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>${product.Price:N2}</td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>${saleDetail.Total:N2}</td></tr>");
             }
 
             sale.TotalAmount = totalAmount;
             await _saleRepository.AddAsync(sale);
 
+            // Finalize email content with total amount
+            orderDetailsBuilder.AppendLine($"<tr style='font-weight: bold;'><td colspan='3' style='padding: 8px; text-align: right;'>Total:</td><td style='padding: 8px; text-align: right;'>${totalAmount:N2}</td></tr>");
+            orderDetailsBuilder.AppendLine("</table>");
+
             var saleDto = _mapper.Map<SaleDto>(sale);
             
             _logger.LogInformation("Sale created: {SaleId} for user {UserId}, Total: {TotalAmount}", sale.Id, sale.UserId, sale.TotalAmount);
             
+            // Send purchase confirmation email asynchronously (fire and forget)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _emailService.SendPurchaseConfirmationAsync(user.Email!, orderDetailsBuilder.ToString());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send purchase confirmation email to {Email}", user.Email);
+                }
+            });
+
             return CreatedAtAction(nameof(GetById), new { id = sale.Id }, saleDto);
         }
         catch (Exception ex)

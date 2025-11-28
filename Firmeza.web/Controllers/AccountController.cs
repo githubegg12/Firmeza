@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Firmeza.web.Controllers;
 
+/// <summary>
+/// Handles user authentication for the admin panel
+/// Manages login, logout, and access denied scenarios
+/// </summary>
 public class AccountController : Controller
 {
     private readonly IAuthService _authService;
@@ -19,7 +23,10 @@ public class AccountController : Controller
         _userManager = userManager;
     }
 
-    // GET: Login
+    /// <summary>
+    /// Displays the login page
+    /// </summary>
+    /// <param name="returnUrl">URL to redirect to after successful login</param>
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
@@ -31,7 +38,10 @@ public class AccountController : Controller
     }
 
 
-    // POST: Login
+    /// <summary>
+    /// Processes login attempt and redirects based on user role
+    /// Administrators go to Admin dashboard, Clients to Client area
+    /// </summary>
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
@@ -58,23 +68,25 @@ public class AccountController : Controller
 
         var roles = await _userManager.GetRolesAsync(user);
 
-        // Redirección por roles (prioridad sobre ReturnUrl)
+        // Role-based redirection (takes priority over ReturnUrl)
         if (roles.Contains("Administrador"))
             return RedirectToAction("Index", "Admin");
 
         if (roles.Contains("Cliente"))
             return RedirectToAction("Index", "Client", new { area = "Client" });
 
-        // Si existe ReturnUrl y es segura → úsala (solo si no tiene roles específicos)
+        // If ReturnUrl exists and is safe, use it (only if no specific role)
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl) && model.ReturnUrl != "/")
             return LocalRedirect(model.ReturnUrl);
 
-        // Usuario sin rol conocido → inicio
+        // User without known role → home page
         return RedirectToAction("Index", "Home");
     }
 
 
-    // POST: Logout
+    /// <summary>
+    /// Logs out the current user and redirects to home page
+    /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
@@ -83,7 +95,9 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    // Access Denied
+    /// <summary>
+    /// Displays access denied page when user lacks required permissions
+    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     public IActionResult AccessDenied()

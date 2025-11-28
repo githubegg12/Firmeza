@@ -13,6 +13,9 @@
             </h1>
             <p class="text-muted mt-1">Administra los usuarios registrados como clientes.</p>
         </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill me-2"></i>Crear Cliente
+        </a>
     </div>
 
     @if (TempData["Success"] != null)

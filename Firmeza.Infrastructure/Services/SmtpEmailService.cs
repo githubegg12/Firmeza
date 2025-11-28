@@ -23,16 +23,33 @@ public class SmtpEmailService : IEmailService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Sends an email using SMTP protocol
+    /// </summary>
+    /// <param name="to">Recipient email address</param>
+    /// <param name="subject">Email subject</param>
+    /// <param name="body">Email body content</param>
+    /// <param name="isHtml">Whether the body contains HTML content</param>
     public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
     {
         try
         {
-            using var smtpClient = new SmtpClient(_emailSettings.SmtpHost, _emailSettings.SmtpPort)
+            // Validate settings
+            if (string.IsNullOrEmpty(_emailSettings.SmtpHost) || string.IsNullOrEmpty(_emailSettings.SenderEmail))
             {
-                EnableSsl = _emailSettings.EnableSsl,
-                Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password)
-            };
+                _logger.LogError("Email settings are not configured correctly. Host: {Host}, Sender: {Sender}", 
+                    _emailSettings.SmtpHost, _emailSettings.SenderEmail);
+                return;
+            }
 
+            // Configure SMTP client with settings from configuration
+            using var smtpClient = new SmtpClient(_emailSettings.SmtpHost, _emailSettings.SmtpPort);
+            smtpClient.EnableSsl = _emailSettings.EnableSsl;
+            smtpClient.UseDefaultCredentials = false;
+            smtpClient.Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password);
+            smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+
+            // Create email message
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName),
@@ -43,17 +60,25 @@ public class SmtpEmailService : IEmailService
             
             mailMessage.To.Add(to);
 
+            // Send email asynchronously
             await smtpClient.SendMailAsync(mailMessage);
             
-            _logger.LogInformation("Email sent successfully to {Recipient}", to);
+            _logger.LogInformation("Email sent successfully to {Recipient} via {Host}:{Port}", to, _emailSettings.SmtpHost, _emailSettings.SmtpPort);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {Recipient}", to);
-            throw new InvalidOperationException($"Failed to send email to {to}", ex);
+            _logger.LogError(ex, "Failed to send email to {Recipient}. Host: {Host}, Port: {Port}, SSL: {Ssl}", 
+                to, _emailSettings.SmtpHost, _emailSettings.SmtpPort, _emailSettings.EnableSsl);
+            // We don't throw here to prevent crashing the background task or the request
+            // throw new InvalidOperationException($"Failed to send email to {to}", ex);
         }
     }
 
+    /// <summary>
+    /// Sends a welcome email to newly registered users
+    /// </summary>
+    /// <param name="to">Recipient email address</param>
+    /// <param name="userName">User's full name for personalization</param>
     public async Task SendWelcomeEmailAsync(string to, string userName)
     {
         var subject = "¡Bienvenido a Firmeza!";
@@ -73,6 +98,11 @@ public class SmtpEmailService : IEmailService
         await SendEmailAsync(to, subject, body);
     }
 
+    /// <summary>
+    /// Sends a purchase confirmation email with order details
+    /// </summary>
+    /// <param name="to">Recipient email address</param>
+    /// <param name="orderDetails">HTML-formatted order details table</param>
     public async Task SendPurchaseConfirmationAsync(string to, string orderDetails)
     {
         var subject = "Confirmación de Compra - Firmeza";

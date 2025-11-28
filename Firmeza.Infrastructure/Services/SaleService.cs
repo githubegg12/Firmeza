@@ -18,18 +18,29 @@ public class SaleService : ISaleService
     }
 
     // Dashboard Metrics - IMPLEMENTED
+    
+    /// <summary>
+    /// Counts the total number of sales in the system
+    /// </summary>
     public async Task<int> CountAsync()
     {
         var sales = await _saleRepository.GetAllAsync();
         return sales.Count();
     }
 
+    /// <summary>
+    /// Calculates the total revenue from all sales
+    /// </summary>
     public async Task<decimal> GetTotalRevenueAsync()
     {
         var sales = await _saleRepository.GetAllAsync();
         return sales.Sum(s => s.TotalAmount);
     }
 
+    /// <summary>
+    /// Generates a revenue report grouped by product
+    /// Shows total quantity sold and revenue per product
+    /// </summary>
     public async Task<IEnumerable<ProductRevenueDto>> GetProductRevenueReportAsync()
     {
         var sales = await _saleRepository.GetAllAsync();
@@ -55,6 +66,8 @@ public class SaleService : ISaleService
     }
 
     // CRUD Operations - NOT IMPLEMENTED YET (throw NotImplementedException)
+    // These operations are handled directly in SaleController for better control
+    
     public Task<IEnumerable<SaleDto>> GetAllSalesAsync()
     {
         throw new NotImplementedException("Use SaleController for CRUD operations");

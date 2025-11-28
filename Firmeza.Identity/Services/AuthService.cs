@@ -9,12 +9,22 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Firmeza.Identity.Services;
 
+/// <summary>
+/// Service for handling user authentication and registration.
+/// Implements the IAuthService interface and manages user accounts using ASP.NET Core Identity.
+/// </summary>
 public class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
 
+    /// <summary>
+    /// Initializes a new instance of the AuthService class.
+    /// </summary>
+    /// <param name="userManager">The UserManager for managing user accounts.</param>
+    /// <param name="signInManager">The SignInManager for handling user sign-in operations.</param>
+    /// <param name="roleManager">The RoleManager for managing user roles.</param>
     public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
     {
         _userManager = userManager;

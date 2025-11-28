@@ -9,20 +9,29 @@ using System.Text;
 namespace Firmeza.Identity.Services;
 
 /// <summary>
-/// Service for generating and validating JWT tokens
+/// Service responsible for generating and managing JWT (JSON Web Token) authentication tokens.
+/// Handles token creation with user claims and roles for API authentication.
 /// </summary>
 public class JwtTokenService
 {
     private readonly JwtSettings _jwtSettings;
 
+    /// <summary>
+    /// Initializes a new instance of the JwtTokenService class.
+    /// </summary>
+    /// <param name="jwtSettings">The JWT configuration settings from appsettings.json.</param>
     public JwtTokenService(IOptions<JwtSettings> jwtSettings)
     {
         _jwtSettings = jwtSettings.Value;
     }
 
     /// <summary>
-    /// Generates a JWT token for the specified user with their roles
+    /// Generates a JWT token for the specified user with their assigned roles.
+    /// The token includes user ID, username, email, and role claims.
     /// </summary>
+    /// <param name="user">The application user for whom to generate the token.</param>
+    /// <param name="roles">The list of roles assigned to the user.</param>
+    /// <returns>A signed JWT token string.</returns>
     public string GenerateToken(ApplicationUser user, IList<string> roles)
     {
         var claims = new List<Claim>
@@ -55,8 +64,9 @@ public class JwtTokenService
     }
 
     /// <summary>
-    /// Gets the token expiration time
+    /// Calculates and returns the expiration time for a newly generated token.
     /// </summary>
+    /// <returns>The DateTime when a new token would expire.</returns>
     public DateTime GetTokenExpiration()
     {
         return DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);

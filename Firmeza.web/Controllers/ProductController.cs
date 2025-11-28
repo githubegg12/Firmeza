@@ -11,6 +11,11 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Firmeza.web.Controllers
 {
+    /// <summary>
+    /// Admin panel controller for product management
+    /// Uses CQRS pattern with commands and queries
+    /// Provides CRUD operations and export functionality
+    /// </summary>
     [Authorize(Roles = "Administrador")]
     public class ProductController : Controller
     {
@@ -34,7 +39,11 @@ namespace Firmeza.web.Controllers
             _pdfService = pdfService;
         }
 
-        // GET: Product
+        /// <summary>
+        /// Displays product list with optional search and category filtering
+        /// </summary>
+        /// <param name="searchString">Search term for product name or description</param>
+        /// <param name="categoryFilter">Category to filter by</param>
         public async Task<IActionResult> Index(string searchString, string categoryFilter)
         {
             var products = await _getProductQuery.GetAllProductsAsync();
@@ -69,7 +78,9 @@ namespace Firmeza.web.Controllers
             return View(products);
         }
 
-        // GET: Product/Details/5
+        /// <summary>
+        /// Displays detailed information for a specific product
+        /// </summary>
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -82,13 +93,17 @@ namespace Firmeza.web.Controllers
             return View(product);
         }
 
-        // GET: Product/Create
+        /// <summary>
+        /// Displays the product creation form
+        /// </summary>
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Product/Create
+        /// <summary>
+        /// Processes product creation
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateProductDto dto)
@@ -108,7 +123,9 @@ namespace Firmeza.web.Controllers
             return View(dto);
         }
 
-        // GET: Product/Edit/5
+        /// <summary>
+        /// Displays the product edit form
+        /// </summary>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -121,7 +138,9 @@ namespace Firmeza.web.Controllers
             return View(product);
         }
 
-        // POST: Product/Edit/5
+        /// <summary>
+        /// Processes product update
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, UpdateProductDto dto)
@@ -148,7 +167,9 @@ namespace Firmeza.web.Controllers
             return View(product);
         }
 
-        // GET: Product/Delete/5
+        /// <summary>
+        /// Displays product deletion confirmation page
+        /// </summary>
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -161,7 +182,9 @@ namespace Firmeza.web.Controllers
             return View(product);
         }
 
-        // POST: Product/Delete/5
+        /// <summary>
+        /// Processes product deletion
+        /// </summary>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -178,7 +201,10 @@ namespace Firmeza.web.Controllers
         }
 
 
-        // GET: Product/ExportToExcel
+        /// <summary>
+        /// Exports all products to Excel format
+        /// Uses EPPlus library with headers matching bulk import format
+        /// </summary>
         public async Task<IActionResult> ExportToExcel()
         {
             try
@@ -189,7 +215,6 @@ namespace Firmeza.web.Controllers
                 using var package = new ExcelPackage();
                 var worksheet = package.Workbook.Worksheets.Add("Productos");
 
-                // Headers
                 // Headers (Must match BulkImportService expected keys)
                 worksheet.Cells[1, 1].Value = "ID";
                 worksheet.Cells[1, 2].Value = "ProductName";
@@ -207,7 +232,7 @@ namespace Firmeza.web.Controllers
                     range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
                 }
 
-                // Data
+                // Data rows
                 int row = 2;
                 foreach (var product in Product)
                 {
@@ -233,7 +258,10 @@ namespace Firmeza.web.Controllers
             }
         }
 
-        // GET: Product/ExportToPdf
+        /// <summary>
+        /// Exports all products to PDF format
+        /// Uses QuestPDF service for document generation
+        /// </summary>
         public async Task<IActionResult> ExportToPdf()
         {
             try

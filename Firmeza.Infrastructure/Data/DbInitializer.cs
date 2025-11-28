@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Firmeza.Infrastructure.Data
 {
+    /// <summary>
+    /// Database initializer that handles migrations, role creation, and seed data
+    /// </summary>
     public class DbInitializer : IDbInitializer
     {
         private readonly ApplicationDbContext _context;
@@ -23,15 +26,18 @@ namespace Firmeza.Infrastructure.Data
             _roleManager = roleManager;
         }
 
+        /// <summary>
+        /// Initializes the database with migrations, roles, and seed data
+        /// </summary>
         public async Task InitializeAsync()
         {
-            // Ejecutar migraciones pendientes
+            // Apply pending migrations
             if ((await _context.Database.GetPendingMigrationsAsync()).Any())
             {
                 await _context.Database.MigrateAsync();
             }
 
-            // Crear roles por defecto
+            // Create default roles
             var roles = new[] { "Administrador", "Cliente", "Empleado" };
             foreach (var role in roles)
             {
@@ -41,7 +47,7 @@ namespace Firmeza.Infrastructure.Data
                 }
             }
 
-            // Crear usuario administrador de prueba
+            // Create test admin user
             var adminEmail = "admin@firmeza.com";
             if (await _userManager.FindByEmailAsync(adminEmail) == null)
             {
@@ -59,7 +65,7 @@ namespace Firmeza.Infrastructure.Data
                 }
             }
 
-            // Crear usuario cliente de prueba
+            // Create test client user
             var clientEmail = "cliente@firmeza.com";
             if (await _userManager.FindByEmailAsync(clientEmail) == null)
             {
@@ -77,7 +83,7 @@ namespace Firmeza.Infrastructure.Data
                 }
             }
 
-            // Crear datos de prueba si no existen
+            // Create seed data if it doesn't exist
             // (Clients table removed, merged into Users)
 
 

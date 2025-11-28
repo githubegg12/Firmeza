@@ -18,11 +18,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add Infrastructure services (DbContext, Identity, Repositories, etc.)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Configure JWT Settings
+// Configure JWT and Email Settings from appsettings.json
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
-// Add JWT Token Service
+// Add JWT Token Service for generating authentication tokens
 builder.Services.AddScoped<JwtTokenService>();
 
 // Configure JWT Authentication
@@ -45,34 +45,34 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero // No tolerance for token expiration
     };
 });
 
-// Add Authorization
+// Add Authorization services
 builder.Services.AddAuthorization();
 
-// Add AutoMapper
+// Add AutoMapper with mapping profiles
 builder.Services.AddAutoMapper(typeof(ProductProfile), typeof(SaleProfile));
 
 // Add Controllers
 builder.Services.AddControllers();
 
-// Configure CORS
+// Configure CORS (Cross-Origin Resource Sharing)
 builder.Services.AddCors(options =>
 {
+    // Primary CORS policy for Angular client
     options.AddPolicy("AllowAll", policy =>
     {
         policy.WithOrigins("http://localhost:4200") // Angular default port
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials(); // Often needed for auth
+              .AllowCredentials(); // Required for authentication cookies/tokens
         
-        // Also allow wildcard for other dev purposes if needed, or keep it strict
-        // policy.AllowAnyOrigin()... // Cannot use AllowAnyOrigin with AllowCredentials
+        // Note: Cannot use AllowAnyOrigin with AllowCredentials
     });
     
-    // Fallback policy for development if needed
+    // Fallback CORS policy for development/testing
     options.AddPolicy("DevCors", policy =>
     {
         policy.AllowAnyOrigin()
@@ -81,7 +81,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure Swagger/OpenAPI
+// Configure Swagger/OpenAPI for API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -97,7 +97,7 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Configure JWT Authentication in Swagger
+    // Configure JWT Authentication in Swagger UI
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -105,7 +105,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Ingrese 'Bearer' seguido de un espacio y el token JWT.\n\nEjemplo: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        Description = "Ingrese 'Bearer' seguido de un espacio y el token JWT.\\n\\nEjemplo: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -123,7 +123,7 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Include XML comments if available
+    // Include XML comments in Swagger if available
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -138,26 +138,33 @@ var app = builder.Build();
 // Configure HTTP Request Pipeline
 // -------------------------
 
-// Enable Swagger in all environments for testing
+// Enable Swagger in all environments for testing and documentation
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Firmeza API v1");
-    options.RoutePrefix = string.Empty; // Swagger UI at root
+    options.RoutePrefix = string.Empty; // Swagger UI at root URL
 });
 
+// Redirect HTTP to HTTPS
 app.UseHttpsRedirection();
 
+// Apply CORS policy
 app.UseCors("AllowAll");
 
+// Enable authentication middleware
 app.UseAuthentication();
+
+// Enable authorization middleware
 app.UseAuthorization();
 
+// Map controller endpoints
 app.MapControllers();
 
 // -------------------------
 // Database Initialization
 // -------------------------
+// Seed database with initial data (roles, admin user, test data)
 await SeedDatabaseAsync(app);
 
 app.Run();

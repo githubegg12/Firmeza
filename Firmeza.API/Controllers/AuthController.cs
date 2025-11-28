@@ -70,6 +70,19 @@ public class AuthController : ControllerBase
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+            
+            // Restrict "Administrador" from logging into the Client App (API)
+            // Admins should only use the Admin Panel (Web App)
+            if (roles.Contains("Administrador"))
+            {
+                _logger.LogWarning("Admin user {Email} attempted to login to Client App", request.Email);
+                return Unauthorized(new AuthResponse
+                {
+                    Success = false,
+                    Message = "Acceso denegado. Los administradores deben usar el panel de administración."
+                });
+            }
+
             var token = _jwtTokenService.GenerateToken(user, roles);
             var expiration = _jwtTokenService.GetTokenExpiration();
 
@@ -133,7 +146,7 @@ public class AuthController : ControllerBase
                 });
             }
 
-            // Create new user
+            // Create new user entity
             var user = new ApplicationUser
             {
                 UserName = request.Email, // Use email as username
