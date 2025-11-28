@@ -1,0 +1,120 @@
+<div class="cart-container">
+    <div class="cart-header">
+        <h1>🛒 Carrito de Compras</h1>
+        <p class="item-count">{{ itemCount() }} {{ itemCount() === 1 ? 'artículo' : 'artículos' }}</p>
+    </div>
+
+    @if (checkoutSuccess()) {
+    <div class="success-message">
+        <div class="success-icon">✓</div>
+        <h2>¡Compra Exitosa!</h2>
+        <p>Tu pedido ha sido procesado correctamente.</p>
+        <p class="redirect-message">Redirigiendo a productos...</p>
+    </div>
+    } @else if (items().length === 0) {
+    <div class="empty-cart">
+        <div class="empty-icon">🛒</div>
+        <h2>Tu carrito está vacío</h2>
+        <p>¡Agrega algunos productos para comenzar!</p>
+        <button class="btn-primary" (click)="continueShopping()">
+            Explorar Productos
+        </button>
+    </div>
+    } @else {
+    <div class="cart-content">
+        <div class="cart-items">
+            @for (item of items(); track item.product.id) {
+            <div class="cart-item">
+                <div class="item-image">
+                    @if (item.product.imageUrl) {
+                    <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+                    } @else {
+                    <div class="placeholder-image">📦</div>
+                    }
+                </div>
+
+                <div class="item-details">
+                    <h3>{{ item.product.name }}</h3>
+                    <p class="item-category">{{ item.product.category }}</p>
+                    @if (item.product.description) {
+                    <p class="item-description">{{ item.product.description }}</p>
+                    }
+                </div>
+
+                <div class="item-price">
+                    <span class="price-label">Precio unitario:</span>
+                    <span class="price-value">${{ item.product.price | number:'1.2-2' }}</span>
+                </div>
+
+                <div class="item-quantity">
+                    <button class="qty-btn" (click)="updateQuantity(item.product.id, item.quantity - 1)"
+                        [disabled]="checkingOut()">
+                        −
+                    </button>
+                    <input type="number" [value]="item.quantity"
+                        (change)="updateQuantity(item.product.id, +$any($event.target).value)" min="1"
+                        [max]="item.product.stock" [disabled]="checkingOut()" />
+                    <button class="qty-btn" (click)="updateQuantity(item.product.id, item.quantity + 1)"
+                        [disabled]="checkingOut() || item.quantity >= item.product.stock">
+                        +
+                    </button>
+                </div>
+
+                <div class="item-total">
+                    <span class="total-label">Subtotal:</span>
+                    <span class="total-value">${{ (item.product.price * item.quantity) | number:'1.2-2' }}</span>
+                </div>
+
+                <button class="btn-remove" (click)="removeItem(item.product.id)" [disabled]="checkingOut()"
+                    title="Eliminar del carrito">
+                    🗑️
+                </button>
+            </div>
+            }
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-card">
+                <h2>Resumen del Pedido</h2>
+
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>${{ totalPrice() | number:'1.2-2' }}</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Envío:</span>
+                    <span class="free-shipping">Gratis</span>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-row total-row">
+                    <span>Total:</span>
+                    <span class="total-amount">${{ totalPrice() | number:'1.2-2' }}</span>
+                </div>
+
+                @if (checkoutError()) {
+                <div class="error-message">
+                    <span class="error-icon">⚠️</span>
+                    <p>{{ checkoutError() }}</p>
+                </div>
+                }
+
+                <button class="btn-checkout" (click)="checkout()" [disabled]="checkingOut() || items().length === 0">
+                    @if (checkingOut()) {
+                    <span class="spinner"></span>
+                    Procesando...
+                    } @else {
+                    Finalizar Compra
+                    }
+                </button>
+
+                <button class="btn-continue" (click)="continueShopping()" [disabled]="checkingOut()">
+                    Continuar Comprando
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</div>

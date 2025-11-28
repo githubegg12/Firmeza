@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "Editar Venta";
     Layout = "_AdminLayout";
-    var clients = ViewData["Clients"] as IEnumerable<Client>;
+    var clients = ViewData["Users"] as IEnumerable<ApplicationUser>;
     var products = ViewData["Products"] as IEnumerable<Product>;
     var currentDetail = Model.SaleDetails.FirstOrDefault();
     var currentProductId = currentDetail?.ProductId ?? 0;
@@ -33,14 +33,14 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                         <div class="mb-4">
-                            <label for="clientId" class="form-label fw-bold">Cliente</label>
-                            <select name="clientId" id="clientId" class="form-select" required>
+                            <label for="userId" class="form-label fw-bold">Cliente</label>
+                            <select name="userId" id="userId" class="form-select" required>
                                 <option value="">Seleccione un cliente...</option>
                                 @if (clients != null)
                                 {
                                     foreach (var client in clients)
                                     {
-                                        <option value="@client.Id" selected="@(client.Id == Model.ClientId)">@client.Name - @client.Document</option>
+                                        <option value="@client.Id" selected="@(client.Id == Model.UserId)">@client.FullName - @client.DocumentId</option>
                                     }
                                 }
                             </select>

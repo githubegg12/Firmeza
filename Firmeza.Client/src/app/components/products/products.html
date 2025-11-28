@@ -1,0 +1,78 @@
+<div class="products-container">
+    <div class="products-header">
+        <h1>🏗️ Productos Disponibles</h1>
+        <p class="products-subtitle">Encuentra todo lo que necesitas para tu proyecto</p>
+    </div>
+
+    @if (loading()) {
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Cargando productos...</p>
+    </div>
+    }
+
+    @if (error()) {
+    <div class="error">
+        <div class="error-icon">⚠️</div>
+        <p>{{ error() }}</p>
+        <button class="btn-retry" (click)="loadProducts()">Reintentar</button>
+    </div>
+    }
+
+    @if (!loading() && !error()) {
+    <div class="products-grid">
+        @for (product of products(); track product.id) {
+        <div class="product-card" [class.out-of-stock]="isOutOfStock(product)">
+            <div class="product-image">
+                @if (product.imageUrl) {
+                <img [src]="product.imageUrl" [alt]="product.name" />
+                } @else {
+                <div class="placeholder-image">📦</div>
+                }
+
+                @if (isOutOfStock(product)) {
+                <div class="out-of-stock-badge">No Disponible</div>
+                }
+
+                @if (addedToCart() === product.id) {
+                <div class="added-notification">✓ Agregado al carrito</div>
+                }
+            </div>
+
+            <div class="product-info">
+                <div class="product-category">{{ product.category }}</div>
+                <h3 class="product-name">{{ product.name }}</h3>
+                @if (product.description) {
+                <p class="product-description">{{ product.description }}</p>
+                }
+
+                <div class="product-footer">
+                    <div class="product-details">
+                        <div class="product-price">${{ product.price | number:'1.2-2' }}</div>
+                        <div class="product-stock">
+                            <span class="stock-icon">📦</span>
+                            <span [class.low-stock]="product.stock > 0 && product.stock <= 5">
+                                Stock: {{ product.stock }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button class="btn-add-to-cart" (click)="addToCart(product)" [disabled]="isOutOfStock(product)">
+                        @if (isOutOfStock(product)) {
+                        Agotado
+                        } @else {
+                        🛒 Agregar
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+        } @empty {
+        <div class="no-products">
+            <div class="no-products-icon">📭</div>
+            <p>No hay productos disponibles.</p>
+        </div>
+        }
+    </div>
+    }
+</div>

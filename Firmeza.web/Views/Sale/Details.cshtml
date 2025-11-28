@@ -52,21 +52,21 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="text-muted small">Cliente</label>
-                            <p class="fw-bold">@Model.Client?.Name</p>
+                            <p class="fw-bold">@Model.User?.FullName</p>
                         </div>
                         <div class="col-md-6">
                             <label class="text-muted small">Documento</label>
-                            <p class="fw-bold">@Model.Client?.Document</p>
+                            <p class="fw-bold">@Model.User?.DocumentId</p>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <label class="text-muted small">Email</label>
-                            <p class="fw-bold">@Model.Client?.Email</p>
+                            <p class="fw-bold">@Model.User?.Email</p>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-muted small">Teléfono</label>
-                            <p class="fw-bold">@Model.Client?.Phone</p>
+                            <label class="text-muted small">Dirección</label>
+                            <p class="fw-bold">@Model.User?.Address</p>
                         </div>
                     </div>
                 </div>

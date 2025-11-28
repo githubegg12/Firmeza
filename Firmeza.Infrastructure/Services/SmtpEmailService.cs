@@ -1,5 +1,6 @@
 using Firmeza.Application.DTOs;
 using Firmeza.Application.Interfaces;
+using Firmeza.Application.Features.Email.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;

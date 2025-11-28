@@ -1,131 +1,116 @@
-@model IEnumerable<Firmeza.Domain.Entities.Client>
+@model IEnumerable<Firmeza.Domain.Entities.ApplicationUser>
 
 @{
-    ViewData["Title"] = "Clientes";
+    ViewData["Title"] = "Gestión de Clientes";
     Layout = "_AdminLayout";
 }
 
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="display-4 fw-bold text-dark">
-                        <i class="bi bi-people-fill me-3 text-primary"></i>Clientes
-                    </h1>
-                    <p class="text-muted">Gestión de clientes del sistema</p>
-                </div>
-                <div>
-                    <span class="badge bg-primary fs-5">Total: @Model.Count()</span>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="bi bi-people-fill me-2"></i>Gestión de Clientes
+            </h1>
+            <p class="text-muted mt-1">Administra los usuarios registrados como clientes.</p>
         </div>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="d-flex gap-2 flex-wrap">
-                <a asp-action="Create" class="btn btn-success">
-                    <i class="bi bi-person-plus-fill me-2"></i>Nuevo Cliente
-                </a>
-                <a asp-action="ExportToExcel" class="btn btn-outline-success" target="_blank">
-                    <i class="bi bi-file-earmark-excel-fill me-2"></i>Exportar Excel
-                </a>
-                <a asp-action="ExportToPdf" class="btn btn-outline-danger" target="_blank">
-                    <i class="bi bi-file-earmark-pdf-fill me-2"></i>Exportar PDF
-                </a>
-            </div>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <form method="get" class="d-flex gap-2">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" name="searchString" 
-                           value="@ViewData["CurrentFilter"]" 
-                           placeholder="Buscar por nombre o documento..." />
-                </div>
-                <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-search me-1"></i>Buscar
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Listado de Clientes</h6>
+            <div class="input-group w-auto">
+                <input type="text" class="form-control form-control-sm" placeholder="Buscar cliente..." id="searchInput">
+                <button class="btn btn-outline-secondary btn-sm" type="button">
+                    <i class="bi bi-search"></i>
                 </button>
-                @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
-                {
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i>
-                    </a>
-                }
-            </form>
+            </div>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            @if (Model.Any())
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="clientsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Documento</th>
+                            <th>Teléfono</th>
+                            <th>Dirección</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-initial rounded-circle bg-light text-primary me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="bi bi-person"></i>
+                                        </div>
+                                        <div class="fw-bold">@item.FullName</div>
+                                    </div>
+                                </td>
+                                <td>@item.Email</td>
+                                <td>@item.DocumentId</td>
+                                <td>@item.PhoneNumber</td>
+                                <td>@item.Address</td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" title="Detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            @if (!Model.Any())
             {
-                <div class="card shadow-sm">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-striped mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th><i class="bi bi-hash me-1"></i>ID</th>
-                                        <th><i class="bi bi-person-fill me-1"></i>Nombre</th>
-                                        <th><i class="bi bi-card-text me-1"></i>Documento</th>
-                                        <th><i class="bi bi-envelope-fill me-1"></i>Email</th>
-                                        <th><i class="bi bi-telephone-fill me-1"></i>Teléfono</th>
-                                        <th><i class="bi bi-geo-alt-fill me-1"></i>Dirección</th>
-                                        <th class="text-center"><i class="bi bi-gear-fill me-1"></i>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var client in Model)
-                                    {
-                                        <tr>
-                                            <td class="fw-bold">#@client.Id</td>
-                                            <td>@client.Name</td>
-                                            <td><span class="badge bg-secondary">@client.Document</span></td>
-                                            <td>
-                                                <a href="mailto:@client.Email" class="text-decoration-none">
-                                                    @client.Email
-                                                </a>
-                                            </td>
-                                            <td>@(client.Phone ?? "-")</td>
-                                            <td>
-                                                <small class="text-muted">@client.Address</small>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <a asp-action="Edit" asp-route-id="@client.Id" 
-                                                       class="btn btn-warning" title="Editar">
-                                                        <i class="bi bi-pencil-fill"></i>
-                                                    </a>
-                                                    <a asp-action="Delete" asp-route-id="@client.Id" 
-                                                       class="btn btn-danger" title="Eliminar">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
                     </div>
-                </div>
-            }
-            else
-            {
-                <div class="alert alert-info text-center py-5">
-                    <i class="bi bi-info-circle display-1 d-block mb-3"></i>
-                    <h4>No hay clientes registrados</h4>
-                    <p class="mb-3">Comienza agregando tu primer cliente al sistema.</p>
-                    <a asp-action="Create" class="btn btn-success">
-                        <i class="bi bi-person-plus-fill me-2"></i>Crear Primer Cliente
-                    </a>
+                    <h5 class="text-muted">No hay clientes registrados</h5>
+                    <p class="text-muted mb-3">Los clientes se registran automáticamente desde la aplicación.</p>
                 </div>
             }
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function(){
+            $("#searchInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#clientsTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+}

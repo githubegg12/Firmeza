@@ -1,8 +1,11 @@
-using Firmeza.Application.Features.Products.Commands;
-using Firmeza.Application.Features.Products.Queries;
+using Firmeza.Application.Features.Product.Commands;
+using Firmeza.Application.Features.Product.Queries;
+using Firmeza.Application.Features.Product.Interfaces;
+using Firmeza.Application.Features.Sale.Interfaces;
+using Firmeza.Application.Features.Email.Interfaces;
 using Firmeza.Application.Interfaces;
 using Firmeza.Domain.Interfaces;
-using Firmeza.Identity.Entities;
+using Firmeza.Domain.Entities;
 using Firmeza.Identity.Services;
 using Firmeza.Infrastructure.Data;
 using Firmeza.Infrastructure.Repositories;
@@ -11,10 +14,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using IBulkImportService = Firmeza.Application.Features.BulkImport.IBulkImportService;
+using Firmeza.Application.Features.BulkImport;
 using IdentityOptions = Firmeza.Identity.Configurations.IdentityOptions;
-using IPdfService = Firmeza.Application.Features.Pdf.IPdfService;
-using IEmailService = Firmeza.Application.Interfaces.IEmailService;
+using Firmeza.Application.Features.Pdf.Interfaces;
+using IEmailService = Firmeza.Application.Features.Email.Interfaces.IEmailService;
 
 namespace Firmeza.Infrastructure;
 
@@ -56,7 +59,6 @@ public static class DependencyInjection
         // Register Repositories
         // -------------------------
         services.AddScoped<IProductRepository, ProductRepository>();
-        services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<ISaleRepository, SaleRepository>();
 
         // -------------------------
@@ -65,12 +67,14 @@ public static class DependencyInjection
         services.AddScoped<ICreateProductCommand, CreateProductCommand>();
         services.AddScoped<IUpdateProductCommand, UpdateProductCommand>();
         services.AddScoped<IDeleteProductCommand, DeleteProductCommand>();
-        services.AddScoped<IGetProductsQuery, GetProductsQuery>();
+        services.AddScoped<IGetProductQuery, GetProductQuery>();
 
 
         // -------------------------
         // Register Custom Services
         // -------------------------
+        services.AddScoped<IProductMetricsService, ProductMetricsService>();
+        services.AddScoped<ISaleService, SaleService>();
         services.AddScoped<IBulkImportService, BulkImportService>();
         services.AddScoped<IPdfService, PdfService>();
         services.AddScoped<IEmailService, SmtpEmailService>();

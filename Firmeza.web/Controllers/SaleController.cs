@@ -1,6 +1,11 @@
-using Firmeza.Application.Features.Pdf;
+using Firmeza.Application.Features.Pdf.Interfaces;
+using Firmeza.Application.Features.Email.Interfaces;
+using Firmeza.Application.DTOs.Sale;
+using Firmeza.Application.Features.Sale.Interfaces;
 using Firmeza.Domain.Entities;
+
 using Firmeza.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,17 +18,21 @@ namespace Firmeza.web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IPdfService _pdfService;
+        private readonly IEmailService _emailService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public SaleController(ApplicationDbContext context, IPdfService pdfService)
+        public SaleController(ApplicationDbContext context, IPdfService pdfService, IEmailService emailService, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _pdfService = pdfService;
+            _emailService = emailService;
+            _userManager = userManager;
         }
 
         // GET: Sales
         public async Task<IActionResult> Index()
         {
-            var sales = await _context.Sales.Include(s => s.Client).ToListAsync();
+            var sales = await _context.Sales.Include(s => s.User).ToListAsync();
             return View(sales);
         }
 
@@ -34,7 +43,7 @@ namespace Firmeza.web.Controllers
                 return NotFound();
 
             var sale = await _context.Sales
-                .Include(s => s.Client)
+                .Include(s => s.User)
                 .Include(s => s.SaleDetails)
                 .ThenInclude(sd => sd.Product)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -48,7 +57,8 @@ namespace Firmeza.web.Controllers
         // GET: Sales/Create
         public async Task<IActionResult> Create()
         {
-            ViewData["Clients"] = await _context.Clients.ToListAsync();
+            var users = await _userManager.GetUsersInRoleAsync("Cliente");
+            ViewData["Users"] = users.ToList();
             ViewData["Products"] = await _context.Products.ToListAsync();
             return View();
         }
@@ -56,15 +66,16 @@ namespace Firmeza.web.Controllers
         // POST: Sales/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int clientId, int productId, int quantity)
+        public async Task<IActionResult> Create(string userId, int productId, int quantity)
         {
-            var client = await _context.Clients.FindAsync(clientId);
+            var user = await _userManager.FindByIdAsync(userId);
             var product = await _context.Products.FindAsync(productId);
 
-            if (client == null || product == null || quantity <= 0)
+            if (user == null || product == null || quantity <= 0)
             {
-                TempData["Error"] = "Cliente, producto o cantidad inválidos.";
-                ViewData["Clients"] = await _context.Clients.ToListAsync();
+                TempData["Error"] = "Usuario, producto o cantidad inválidos.";
+                var users = await _userManager.GetUsersInRoleAsync("Cliente");
+                ViewData["Users"] = users.ToList();
                 ViewData["Products"] = await _context.Products.ToListAsync();
                 return View();
             }
@@ -73,7 +84,8 @@ namespace Firmeza.web.Controllers
             if (product.Stock < quantity)
             {
                 TempData["Error"] = $"Stock insuficiente. Disponible: {product.Stock}, Solicitado: {quantity}";
-                ViewData["Clients"] = await _context.Clients.ToListAsync();
+                var users = await _userManager.GetUsersInRoleAsync("Cliente");
+                ViewData["Users"] = users.ToList();
                 ViewData["Products"] = await _context.Products.ToListAsync();
                 return View();
             }
@@ -83,7 +95,8 @@ namespace Firmeza.web.Controllers
 
             var sale = new Sale
             {
-                Client = client,
+                UserId = userId,
+                User = user,
                 SaleDate = DateTime.UtcNow,
                 TotalAmount = product.Price * quantity,
                 SaleDetails = new[]
@@ -96,6 +109,25 @@ namespace Firmeza.web.Controllers
             _context.Products.Update(product); // Actualizar producto con nuevo stock
             await _context.SaveChangesAsync();
 
+            // Send purchase confirmation email
+            try
+            {
+                var orderDetails = $@"
+                    <p><strong>Cliente:</strong> {user.FullName}</p>
+                    <p><strong>Producto:</strong> {product.Name}</p>
+                    <p><strong>Cantidad:</strong> {quantity}</p>
+                    <p><strong>Precio Unitario:</strong> ${product.Price:N2}</p>
+                    <p><strong>Total:</strong> ${sale.TotalAmount:N2}</p>
+                    <p><strong>Fecha:</strong> {sale.SaleDate:dd/MM/yyyy HH:mm}</p>
+                ";
+                await _emailService.SendPurchaseConfirmationAsync(user.Email!, orderDetails);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the sale
+                Console.WriteLine($"Failed to send confirmation email: {ex.Message}");
+            }
+
             TempData["Success"] = $"Venta creada exitosamente. Stock restante: {product.Stock}";
             return RedirectToAction(nameof(Index));
         }
@@ -107,7 +139,7 @@ namespace Firmeza.web.Controllers
                 return NotFound();
 
             var sale = await _context.Sales
-                .Include(s => s.Client)
+                .Include(s => s.User)
                 .Include(s => s.SaleDetails)
                 .ThenInclude(sd => sd.Product)
                 .FirstOrDefaultAsync(s => s.Id == id);
@@ -115,7 +147,8 @@ namespace Firmeza.web.Controllers
             if (sale == null)
                 return NotFound();
 
-            ViewData["Clients"] = await _context.Clients.ToListAsync();
+            var users = await _userManager.GetUsersInRoleAsync("Cliente");
+            ViewData["Users"] = users.ToList();
             ViewData["Products"] = await _context.Products.ToListAsync();
             return View(sale);
         }
@@ -123,7 +156,7 @@ namespace Firmeza.web.Controllers
         // POST: Sales/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, int clientId, int productId, int quantity)
+        public async Task<IActionResult> Edit(int id, string userId, int productId, int quantity)
         {
             var sale = await _context.Sales
                 .Include(s => s.SaleDetails)
@@ -133,13 +166,14 @@ namespace Firmeza.web.Controllers
             if (sale == null)
                 return NotFound();
 
-            var client = await _context.Clients.FindAsync(clientId);
+            var user = await _userManager.FindByIdAsync(userId);
             var newProduct = await _context.Products.FindAsync(productId);
 
-            if (client == null || newProduct == null || quantity <= 0)
+            if (user == null || newProduct == null || quantity <= 0)
             {
-                TempData["Error"] = "Cliente, producto o cantidad inválidos.";
-                ViewData["Clients"] = await _context.Clients.ToListAsync();
+                TempData["Error"] = "Usuario, producto o cantidad inválidos.";
+                var users = await _userManager.GetUsersInRoleAsync("Cliente");
+                ViewData["Users"] = users.ToList();
                 ViewData["Products"] = await _context.Products.ToListAsync();
                 return View(sale);
             }
@@ -160,7 +194,8 @@ namespace Firmeza.web.Controllers
                 if (newProduct.Stock < quantity)
                 {
                     TempData["Error"] = $"Stock insuficiente para {newProduct.Name}. Disponible: {newProduct.Stock}, Solicitado: {quantity}";
-                    ViewData["Clients"] = await _context.Clients.ToListAsync();
+                    var users = await _userManager.GetUsersInRoleAsync("Cliente");
+                    ViewData["Users"] = users.ToList();
                     ViewData["Products"] = await _context.Products.ToListAsync();
                     
                     // Revertir el cambio de stock del producto anterior
@@ -183,7 +218,8 @@ namespace Firmeza.web.Controllers
                 if (newProduct.Stock < quantity)
                 {
                     TempData["Error"] = $"Stock insuficiente. Disponible: {newProduct.Stock}, Solicitado: {quantity}";
-                    ViewData["Clients"] = await _context.Clients.ToListAsync();
+                    var users = await _userManager.GetUsersInRoleAsync("Cliente");
+                    ViewData["Users"] = users.ToList();
                     ViewData["Products"] = await _context.Products.ToListAsync();
                     return View(sale);
                 }
@@ -198,7 +234,8 @@ namespace Firmeza.web.Controllers
             }
 
             // Update Sale
-            sale.Client = client;
+            sale.UserId = userId;
+            sale.User = user;
             sale.TotalAmount = newProduct.Price * quantity;
 
             _context.Update(sale);
@@ -215,7 +252,7 @@ namespace Firmeza.web.Controllers
                 return NotFound();
 
             var sale = await _context.Sales
-                .Include(s => s.Client)
+                .Include(s => s.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (sale == null)
@@ -257,7 +294,7 @@ namespace Firmeza.web.Controllers
         public async Task<IActionResult> ExportToPdf(int id)
         {
             var sale = await _context.Sales
-                .Include(s => s.Client)
+                .Include(s => s.User)
                 .Include(s => s.SaleDetails)
                 .ThenInclude(sd => sd.Product)
                 .FirstOrDefaultAsync(s => s.Id == id);

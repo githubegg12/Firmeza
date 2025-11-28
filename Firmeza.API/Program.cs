@@ -53,7 +53,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // Add AutoMapper
-builder.Services.AddAutoMapper(typeof(ProductProfile), typeof(ClientProfile), typeof(SaleProfile));
+builder.Services.AddAutoMapper(typeof(ProductProfile), typeof(SaleProfile));
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -62,6 +62,18 @@ builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Angular default port
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Often needed for auth
+        
+        // Also allow wildcard for other dev purposes if needed, or keep it strict
+        // policy.AllowAnyOrigin()... // Cannot use AllowAnyOrigin with AllowCredentials
+    });
+    
+    // Fallback policy for development if needed
+    options.AddPolicy("DevCors", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()

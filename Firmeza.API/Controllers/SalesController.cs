@@ -2,9 +2,12 @@ using AutoMapper;
 using Firmeza.Application.DTOs.Sale;
 using Firmeza.Domain.Entities;
 using Firmeza.Domain.Interfaces;
+
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Firmeza.API.Controllers;
 
@@ -17,15 +20,21 @@ namespace Firmeza.API.Controllers;
 public class SalesController : ControllerBase
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IProductRepository _productRepository;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IMapper _mapper;
     private readonly ILogger<SalesController> _logger;
 
     public SalesController(
         ISaleRepository saleRepository,
+        IProductRepository productRepository,
+        UserManager<ApplicationUser> userManager,
         IMapper mapper,
         ILogger<SalesController> logger)
     {
         _saleRepository = saleRepository;
+        _productRepository = productRepository;
+        _userManager = userManager;
         _mapper = mapper;
         _logger = logger;
     }
@@ -91,12 +100,19 @@ public class SalesController : ControllerBase
     {
         try
         {
-            // In a real implementation, you would filter by the current user's client ID
-            // For now, return all sales (this should be enhanced with user-client relationship)
-            var sales = await _saleRepository.GetAllAsync();
-            var saleDtos = _mapper.Map<IEnumerable<SaleDto>>(sales);
+            // Get current user's ID from claims
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("No se pudo identificar al usuario");
+            }
             
-            _logger.LogInformation("User {User} retrieved their sales", User.Identity?.Name);
+            // Filter sales by current user
+            var allSales = await _saleRepository.GetAllAsync();
+            var userSales = allSales.Where(s => s.UserId == userId);
+            var saleDtos = _mapper.Map<IEnumerable<SaleDto>>(userSales);
+            
+            _logger.LogInformation("User {UserId} retrieved {Count} sales", userId, userSales.Count());
             
             return Ok(saleDtos);
         }
@@ -124,14 +140,60 @@ public class SalesController : ControllerBase
                 return BadRequest(ModelState);
             }
 
-            var sale = _mapper.Map<Sale>(createDto);
-            sale.SaleDate = DateTime.UtcNow;
-            
+            // Validate user exists
+            var user = await _userManager.FindByIdAsync(createDto.UserId);
+            if (user == null)
+            {
+                return BadRequest($"Usuario con ID {createDto.UserId} no encontrado");
+            }
+
+            // Create sale entity
+            var sale = new Sale
+            {
+                UserId = createDto.UserId,
+                SaleDate = DateTime.UtcNow,
+                SaleDetails = new List<SaleDetail>()
+            };
+
+            decimal totalAmount = 0;
+
+            // Process each item
+            foreach (var itemDto in createDto.Items)
+            {
+                var product = await _productRepository.GetByIdAsync(itemDto.ProductId);
+                if (product == null)
+                {
+                    return BadRequest($"Producto con ID {itemDto.ProductId} no encontrado");
+                }
+
+                // Validate stock
+                if (product.Stock < itemDto.Quantity)
+                {
+                    return BadRequest($"Stock insuficiente para {product.Name}. Disponible: {product.Stock}, Solicitado: {itemDto.Quantity}");
+                }
+
+                // Create sale detail
+                var saleDetail = new SaleDetail
+                {
+                    ProductId = product.Id,
+                    Quantity = itemDto.Quantity,
+                    UnitPrice = product.Price
+                };
+
+                sale.SaleDetails.Add(saleDetail);
+                totalAmount += saleDetail.Total;
+
+                // Update product stock
+                product.Stock -= itemDto.Quantity;
+                await _productRepository.UpdateAsync(product);
+            }
+
+            sale.TotalAmount = totalAmount;
             await _saleRepository.AddAsync(sale);
 
             var saleDto = _mapper.Map<SaleDto>(sale);
             
-            _logger.LogInformation("Sale created: {SaleId} for client {ClientId}", sale.Id, sale.ClientId);
+            _logger.LogInformation("Sale created: {SaleId} for user {UserId}, Total: {TotalAmount}", sale.Id, sale.UserId, sale.TotalAmount);
             
             return CreatedAtAction(nameof(GetById), new { id = sale.Id }, saleDto);
         }

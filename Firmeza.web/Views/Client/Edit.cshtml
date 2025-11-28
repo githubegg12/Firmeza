@@ -1,4 +1,4 @@
-@model Firmeza.web.ViewModels.ClientViewModel
+@model Firmeza.Domain.Entities.ApplicationUser
 
 @{
     ViewData["Title"] = "Editar Cliente";
@@ -6,76 +6,60 @@
 }
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="mb-0"><i class="bi bi-pencil-fill me-2"></i>Editar Cliente</h4>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-pencil-square me-2"></i>Editar Cliente
+        </h1>
+        <a asp-action="Index" class="btn btn-secondary btn-sm shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Listado
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Cliente</h6>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Name" class="form-label">Nombre <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                    <input asp-for="Name" class="form-control" placeholder="Nombre completo del cliente" />
-                                </div>
-                                <span asp-validation-for="Name" class="text-danger small"></span>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Document" class="form-label">Documento <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                                    <input asp-for="Document" class="form-control" placeholder="Cédula, NIT, etc." />
-                                </div>
-                                <span asp-validation-for="Document" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                                    <input asp-for="Email" type="email" class="form-control" placeholder="correo@ejemplo.com" />
-                                </div>
-                                <span asp-validation-for="Email" class="text-danger small"></span>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Phone" class="form-label">Teléfono</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                    <input asp-for="Phone" type="tel" class="form-control" placeholder="(opcional)" />
-                                </div>
-                                <span asp-validation-for="Phone" class="text-danger small"></span>
-                            </div>
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label fw-bold">Nombre Completo</label>
+                            <input asp-for="FullName" class="form-control" placeholder="Ej: Juan Pérez" />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Address" class="form-label">Dirección <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
-                                <textarea asp-for="Address" class="form-control" rows="3" placeholder="Dirección completa del cliente"></textarea>
-                            </div>
-                            <span asp-validation-for="Address" class="text-danger small"></span>
+                            <label asp-for="Email" class="form-label fw-bold">Email</label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="ejemplo@correo.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>ID del Cliente:</strong> @Model.Id
+                        <div class="mb-3">
+                            <label asp-for="DocumentId" class="form-label fw-bold">Documento de Identidad</label>
+                            <input asp-for="DocumentId" class="form-control" placeholder="Ej: 12345678" />
+                            <span asp-validation-for="DocumentId" class="text-danger"></span>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-x-circle me-1"></i>Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-save me-1"></i>Actualizar Cliente
+                        <div class="mb-3">
+                            <label asp-for="PhoneNumber" class="form-label fw-bold">Teléfono</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="Ej: +57 300 1234567" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label fw-bold">Dirección</label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Ej: Calle 123 #45-67"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-light me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Guardar Cambios
                             </button>
                         </div>
                     </form>

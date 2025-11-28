@@ -1,6 +1,9 @@
 using Firmeza.Application.Interfaces;
+using Firmeza.Application.Features.Email.Interfaces;
+using Firmeza.Application.DTOs;
+using Firmeza.Application.DTOs.Client;
 using Firmeza.Identity.DTOs;
-using Firmeza.Identity.Entities;
+using Firmeza.Domain.Entities;
 using Firmeza.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -77,6 +80,7 @@ public class AuthController : ControllerBase
                 Success = true,
                 Message = "Login exitoso",
                 Token = token,
+                UserId = user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
                 Roles = roles.ToList(),
@@ -117,21 +121,27 @@ public class AuthController : ControllerBase
                 });
             }
 
-            var existingUserName = await _userManager.FindByNameAsync(request.UserName);
-            if (existingUserName != null)
+
+            // Check for unique DocumentId
+            var existingDocument = _userManager.Users.FirstOrDefault(u => u.DocumentId == request.DocumentId);
+            if (existingDocument != null)
             {
                 return BadRequest(new AuthResponse
                 {
                     Success = false,
-                    Message = "El nombre de usuario ya está en uso"
+                    Message = "El documento de identidad ya está registrado"
                 });
             }
 
             // Create new user
             var user = new ApplicationUser
             {
-                UserName = request.UserName,
+                UserName = request.Email, // Use email as username
                 Email = request.Email,
+                FullName = $"{request.FirstName} {request.LastName}", // Combine first and last name
+                DocumentId = request.DocumentId,
+                PhoneNumber = request.PhoneNumber,
+                Address = request.Address,
                 EmailConfirmed = true // Auto-confirm for simplicity
             };
 
@@ -175,6 +185,7 @@ public class AuthController : ControllerBase
                 Success = true,
                 Message = "Registro exitoso",
                 Token = token,
+                UserId = user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
                 Roles = roles.ToList(),

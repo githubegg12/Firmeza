@@ -1,50 +1,52 @@
-using Firmeza.Domain.Interfaces;
+using Firmeza.Application.Interfaces;
+using Firmeza.Application.Features.Product.Interfaces;
+using Firmeza.Application.Features.Sale.Interfaces;
+using Firmeza.Domain.Entities;
 using Firmeza.web.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Firmeza.web.Controllers;
 
 /// <summary>
-/// Controller for admin dashboard and management
+/// Admin dashboard controller using clean architecture with services
 /// </summary>
 [Authorize(Roles = "Administrador")]
 public class AdminController : Controller
 {
-    private readonly IProductRepository _productRepository;
-    private readonly IClientRepository _clientRepository;
-    private readonly ISaleRepository _saleRepository;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IProductMetricsService _productMetricsService;
+    private readonly ISaleService _saleService;
 
     public AdminController(
-        IProductRepository productRepository,
-        IClientRepository clientRepository,
-        ISaleRepository saleRepository)
+        UserManager<ApplicationUser> userManager,
+        IProductMetricsService productMetricsService,
+        ISaleService saleService)
     {
-        _productRepository = productRepository;
-        _clientRepository = clientRepository;
-        _saleRepository = saleRepository;
+        _userManager = userManager;
+        _productMetricsService = productMetricsService;
+        _saleService = saleService;
     }
 
     /// <summary>
     /// Displays the admin dashboard with real-time metrics
+    /// Uses efficient COUNT queries instead of loading all data
     /// </summary>
     public async Task<IActionResult> Index()
     {
-        var clients = await _clientRepository.GetAllAsync();
-        var products = await _productRepository.GetAllAsync();
-        var sales = await _saleRepository.GetAllAsync();
-
-        var model = new DashboardViewModel
+        var clients = await _userManager.GetUsersInRoleAsync("Cliente");
+        
+        var viewModel = new DashboardViewModel
         {
-            TotalClients = clients.Count(),
-            TotalProducts = products.Count(),
-            TotalSales = sales.Count(),
-            TotalRevenue = sales.Sum(s => s.TotalAmount),
+            TotalClients = clients.Count,
+            TotalProducts = await _productMetricsService.CountAsync(),
+            TotalSales = await _saleService.CountAsync(),
+            TotalRevenue = await _saleService.GetTotalRevenueAsync(),
             LastUpdated = DateTime.Now
         };
 
-        return View(model);
+        return View(viewModel);
     }
 
     /// <summary>
@@ -54,5 +56,6 @@ public class AdminController : Controller
     {
         return await Index();
     }
-}
 
+
+}

@@ -1,21 +1,26 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["Firmeza.sln", "./"]
 COPY ["Firmeza.API/Firmeza.API.csproj", "Firmeza.API/"]
+COPY ["Firmeza.Application/Firmeza.Application.csproj", "Firmeza.Application/"]
+COPY ["Firmeza.Domain/Firmeza.Domain.csproj", "Firmeza.Domain/"]
+COPY ["Firmeza.Infrastructure/Firmeza.Infrastructure.csproj", "Firmeza.Infrastructure/"]
+COPY ["Firmeza.Identity/Firmeza.Identity.csproj", "Firmeza.Identity/"]
+COPY ["Firmeza.web/Firmeza.web.csproj", "Firmeza.web/"]
+COPY ["Firmeza.Tests/Firmeza.Tests.csproj", "Firmeza.Tests/"]
+
 RUN dotnet restore "Firmeza.API/Firmeza.API.csproj"
 COPY . .
 WORKDIR "/src/Firmeza.API"
-RUN dotnet build "./Firmeza.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "Firmeza.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Firmeza.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Firmeza.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

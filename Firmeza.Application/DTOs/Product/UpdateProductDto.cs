@@ -1,25 +1,15 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Firmeza.Application.DTOs;
 
 /// <summary>
-/// DTO for updating an existing product.
+/// DTO for updating an existing product
+/// Properties are nullable to allow partial updates
 /// </summary>
 public class UpdateProductDto
 {
-    [Required, MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
-
+    public string? Name { get; set; }
     public string? Description { get; set; }
-
-    [Required]
-    public string Category { get; set; } = string.Empty;
-
-    [Range(0.01, 1000000)]
-    public decimal Price { get; set; }
-
-    [Range(0, int.MaxValue)]
-    public int Stock { get; set; }
-
+    public string? Category { get; set; }
     public string? ImageUrl { get; set; }
+    public decimal Price { get; set; }
+    public int Stock { get; set; }
 }

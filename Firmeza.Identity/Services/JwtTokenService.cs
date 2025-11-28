@@ -1,5 +1,5 @@
 using Firmeza.Identity.DTOs;
-using Firmeza.Identity.Entities;
+using Firmeza.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;

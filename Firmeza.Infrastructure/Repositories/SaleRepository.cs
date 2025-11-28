@@ -22,7 +22,7 @@ namespace Firmeza.Infrastructure.Repositories
         public async Task<IEnumerable<Sale>> GetAllAsync()
         {
             return await _context.Sales
-                .Include(s => s.Client)
+                .Include(s => s.User)
                 .Include(s => s.SaleDetails)
                 .ThenInclude(d => d.Product)
                 .AsNoTracking()
@@ -32,7 +32,7 @@ namespace Firmeza.Infrastructure.Repositories
         public async Task<Sale?> GetByIdAsync(int id)
         {
             return await _context.Sales
-                .Include(s => s.Client)
+                .Include(s => s.User)
                 .Include(s => s.SaleDetails)
                 .ThenInclude(d => d.Product)
                 .FirstOrDefaultAsync(s => s.Id == id);

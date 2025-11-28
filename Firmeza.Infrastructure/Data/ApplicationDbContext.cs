@@ -1,5 +1,5 @@
 using Firmeza.Domain.Entities;
-using Firmeza.Identity.Entities;
+
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,15 +7,15 @@ namespace Firmeza.Infrastructure.Data
 {
     /// <summary>
     /// Main EF Core database context for the application.
-    /// Inherits from IdentityDbContext<User> to connect the custom User entity with ASP.NET Core Identity.
+    /// Inherits from IdentityDbContext<ApplicationUser> to connect the custom User entity with ASP.NET Core Identity.
     /// </summary>
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser> // CORRECTED: Using the correct 'User' entity
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
         public DbSet<Product> Products { get; set; }
-        public DbSet<Client> Clients { get; set; }
+        // Clients table removed - using AspNetUsers (ApplicationUser) instead
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleDetail> SaleDetails { get; set; }
 
@@ -23,20 +23,14 @@ namespace Firmeza.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // ---- RELACIÓN CLIENTE ↔ USUARIO (Identity) ----
-            builder.Entity<Client>()
-                .HasOne<ApplicationUser>()                // Navigation via Fluent API only
-                .WithMany()
-                .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // ---- RELACIONES DE NEGOCIO ----
+            // ---- SALE ↔ USER (Identity) RELATIONSHIP ----
             builder.Entity<Sale>()
-                .HasOne(s => s.Client)
-                .WithMany(c => c.Sales)
-                .HasForeignKey(s => s.ClientId)
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // ---- SALE DETAILS RELATIONSHIPS ----
             builder.Entity<SaleDetail>()
                 .HasOne(sd => sd.Sale)
                 .WithMany(s => s.SaleDetails)

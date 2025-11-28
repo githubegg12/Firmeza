@@ -1,5 +1,6 @@
 using Firmeza.Application.Interfaces;
-using Firmeza.Identity.Entities;
+using Firmeza.Application.Features.Email.Interfaces;
+using Firmeza.Domain.Entities;
 using Firmeza.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -72,42 +73,6 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    // GET: Register
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult Register()
-    {
-        return View(new RegisterViewModel());
-    }
-
-    // POST: Register
-    [HttpPost]
-    [AllowAnonymous]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
-    {
-        if (!ModelState.IsValid)
-            return View(model);
-
-        // SECURITY FIX: Always force "Cliente" role for new registrations.
-        // Ignore model.Role to prevent privilege escalation.
-        var role = "Cliente";
-
-        var result = await _authService.RegisterAsync(model.Username, model.Email, model.Password, role);
-
-        if (!result.Success)
-        {
-            foreach (var error in result.Errors ?? Enumerable.Empty<string>())
-                ModelState.AddModelError("", error);
-
-            return View(model);
-        }
-
-        // Auto login después del registro
-        await _authService.SignInAsync(model.Email, model.Password, false);
-
-        return RedirectToAction("Index", "Client");
-    }
 
     // POST: Logout
     [HttpPost]

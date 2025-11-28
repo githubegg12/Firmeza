@@ -1,0 +1,69 @@
+@model IEnumerable<Firmeza.Application.DTOs.Sale.ProductRevenueDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Reporte de Ingresos por Producto";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-currency-dollar text-success me-2"></i>Reporte de Ingresos por Producto
+        </h1>
+        <div class="d-flex gap-2">
+            <a asp-action="ExportRevenueReportPdf" class="btn btn-danger">
+                <i class="bi bi-file-pdf me-2"></i>Exportar a PDF
+            </a>
+            <a asp-action="Index" asp-controller="Admin" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-white">
+            <h6 class="m-0 font-weight-bold text-primary">Detalle de Ventas por Producto</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID Producto</th>
+                            <th>Nombre del Producto</th>
+                            <th class="text-center">Cantidad Vendida</th>
+                            <th class="text-end">Precio Unitario (Actual)</th>
+                            <th class="text-end">Ingresos Totales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.ProductId</td>
+                                    <td class="fw-bold">@item.ProductName</td>
+                                    <td class="text-center">@item.TotalQuantitySold</td>
+                                    <td class="text-end">@item.CurrentUnitPrice.ToString("C2")</td>
+                                    <td class="text-end text-success fw-bold">@item.TotalRevenue.ToString("C2")</td>
+                                </tr>
+                            }
+                            <tr class="table-secondary fw-bold">
+                                <td colspan="4" class="text-end">TOTAL GENERAL:</td>
+                                <td class="text-end text-success">@Model.Sum(x => x.TotalRevenue).ToString("C2")</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox me-2"></i>No hay datos de ventas registrados.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

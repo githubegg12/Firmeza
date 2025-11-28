@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Firmeza.Application.DTOs;
-using Firmeza.Identity.Entities;
+using Firmeza.Application.DTOs.Client;
+using Firmeza.Domain.Entities;
 using Firmeza.Application.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -21,26 +22,40 @@ public class AuthService : IAuthService
         _roleManager = roleManager;
     }
 
-    public async Task<AuthResult> RegisterAsync(string username, string email, string password, string role)
+    public async Task<AuthResult> RegisterAsync(RegisterRequest request)
     {
         var result = new AuthResult();
 
-        var existing = await _userManager.FindByNameAsync(username);
+        // Use email as username
+        var existing = await _userManager.FindByEmailAsync(request.Email);
         if (existing != null)
         {
             result.Success = false;
-            result.Errors = new[] { "El nombre de usuario ya está en uso" };
+            result.Errors = new[] { "El email ya está en uso" };
+            return result;
+        }
+
+        // Check for unique DocumentId
+        var existingDocument = _userManager.Users.FirstOrDefault(u => u.DocumentId == request.DocumentId);
+        if (existingDocument != null)
+        {
+            result.Success = false;
+            result.Errors = new[] { "El documento de identidad ya está registrado" };
             return result;
         }
 
         var user = new ApplicationUser
         {
-            UserName = username,
-            Email = email,
+            UserName = request.Email, // Use email as username
+            Email = request.Email,
+            FullName = $"{request.FirstName} {request.LastName}", // Combine first and last name
+            DocumentId = request.DocumentId,
+            PhoneNumber = request.PhoneNumber,
+            Address = request.Address,
             EmailConfirmed = true
         };
 
-        var createResult = await _userManager.CreateAsync(user, password);
+        var createResult = await _userManager.CreateAsync(user, request.Password);
         if (!createResult.Succeeded)
         {
             result.Success = false;
@@ -48,15 +63,13 @@ public class AuthService : IAuthService
             return result;
         }
 
-        // Ensure role exists
-        if (!string.IsNullOrWhiteSpace(role))
+        // Assign role - all new registrations are automatically "Cliente"
+        const string role = "Cliente";
+        if (!await _roleManager.RoleExistsAsync(role))
         {
-            if (!await _roleManager.RoleExistsAsync(role))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(role));
-            }
-            await _userManager.AddToRoleAsync(user, role);
+            await _roleManager.CreateAsync(new IdentityRole(role));
         }
+        await _userManager.AddToRoleAsync(user, role);
 
         result.Success = true;
         return result;

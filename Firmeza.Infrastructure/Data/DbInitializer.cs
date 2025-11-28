@@ -1,7 +1,7 @@
 using Firmeza.Application.Interfaces; // Will use the interface from the Application layer
 using Firmeza.Domain.Entities;
 using Firmeza.Identity;
-using Firmeza.Identity.Entities;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,16 +78,8 @@ namespace Firmeza.Infrastructure.Data
             }
 
             // Crear datos de prueba si no existen
-            if (!_context.Clients.Any())
-            {
-                var clients = new[]
-                {
-                    new Client { Name = "Cliente 1", Document = "12345678", Email = "cliente1@test.com", Phone = "123456789", Address = "Calle 1" },
-                    new Client { Name = "Cliente 2", Document = "87654321", Email = "cliente2@test.com", Phone = "987654321", Address = "Calle 2" }
-                };
-                _context.Clients.AddRange(clients);
-                await _context.SaveChangesAsync();
-            }
+            // (Clients table removed, merged into Users)
+
 
             if (!_context.Products.Any())
             {

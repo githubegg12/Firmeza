@@ -1,4 +1,4 @@
-@model Firmeza.Domain.Entities.Client
+@model Firmeza.Domain.Entities.ApplicationUser
 
 @{
     ViewData["Title"] = "Eliminar Cliente";
@@ -6,84 +6,48 @@
 }
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0"><i class="bi bi-trash-fill me-2"></i>Eliminar Cliente</h4>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-trash me-2"></i>Eliminar Cliente
+        </h1>
+        <a asp-action="Index" class="btn btn-secondary btn-sm shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Listado
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
+            <div class="card shadow mb-4 border-left-danger">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-danger">¿Estás seguro de eliminar este cliente?</h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-warning" role="alert">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>¿Está seguro que desea eliminar este cliente?</strong>
-                        <p class="mb-0 mt-2">Esta acción no se puede deshacer.</p>
+                        Esta acción no se puede deshacer. Se eliminarán todos los datos asociados a este cliente.
                     </div>
 
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Información del Cliente</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-hash me-1"></i>ID
-                                    </label>
-                                    <p class="form-control-plaintext">#@Model.Id</p>
-                                </div>
+                    <dl class="row">
+                        <dt class="col-sm-4">Nombre Completo</dt>
+                        <dd class="col-sm-8">@Model.FullName</dd>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-person-fill me-1"></i>Nombre
-                                    </label>
-                                    <p class="form-control-plaintext">@Model.Name</p>
-                                </div>
-                            </div>
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">@Model.Email</dd>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-card-text me-1"></i>Documento
-                                    </label>
-                                    <p class="form-control-plaintext">
-                                        <span class="badge bg-secondary">@Model.Document</span>
-                                    </p>
-                                </div>
+                        <dt class="col-sm-4">Documento</dt>
+                        <dd class="col-sm-8">@Model.DocumentId</dd>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-envelope-fill me-1"></i>Email
-                                    </label>
-                                    <p class="form-control-plaintext">
-                                        <a href="mailto:@Model.Email">@Model.Email</a>
-                                    </p>
-                                </div>
-                            </div>
+                        <dt class="col-sm-4">Teléfono</dt>
+                        <dd class="col-sm-8">@Model.PhoneNumber</dd>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-telephone-fill me-1"></i>Teléfono
-                                    </label>
-                                    <p class="form-control-plaintext">@(Model.Phone ?? "No especificado")</p>
-                                </div>
+                        <dt class="col-sm-4">Dirección</dt>
+                        <dd class="col-sm-8">@Model.Address</dd>
+                    </dl>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-geo-alt-fill me-1"></i>Dirección
-                                    </label>
-                                    <p class="form-control-plaintext">@Model.Address</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form asp-action="Delete" method="post">
+                    <form asp-action="Delete">
                         <input type="hidden" asp-for="Id" />
-                        <div class="d-flex justify-content-end gap-2">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-x-circle me-1"></i>Cancelar
-                            </a>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a asp-action="Index" class="btn btn-light me-md-2">Cancelar</a>
                             <button type="submit" class="btn btn-danger">
                                 <i class="bi bi-trash-fill me-1"></i>Confirmar Eliminación
                             </button>

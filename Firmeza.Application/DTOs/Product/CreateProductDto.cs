@@ -1,25 +1,14 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Firmeza.Application.DTOs;
 
 /// <summary>
-/// DTO for creating a new product.
+/// DTO for creating a new product
 /// </summary>
 public class CreateProductDto
 {
-    [Required, MaxLength(100)]
     public string Name { get; set; } = string.Empty;
-
-    public string? Description { get; set; }
-
-    [Required]
+    public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
-
-    [Range(0.01, 1000000)]
-    public decimal Price { get; set; }
-
-    [Range(0, int.MaxValue)]
-    public int Stock { get; set; }
-
     public string? ImageUrl { get; set; }
+    public decimal Price { get; set; }
+    public int Stock { get; set; }
 }

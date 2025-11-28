@@ -1,0 +1,109 @@
+@model Firmeza.Domain.Entities.ApplicationUser
+
+@{
+    ViewData["Title"] = "Detalles del Cliente";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-person me-2"></i>Detalles del Cliente
+        </h1>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary btn-sm shadow-sm me-2">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-sm shadow-sm">
+                <i class="bi bi-pencil-square me-1"></i>Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="bi bi-info-circle me-2"></i>Información Personal
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Nombre Completo</label>
+                            <p class="fw-bold">@Model.FullName</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Documento de Identidad</label>
+                            <p class="fw-bold">@Model.DocumentId</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Email</label>
+                            <p class="fw-bold">@Model.Email</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Teléfono</label>
+                            <p class="fw-bold">@Model.PhoneNumber</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <label class="text-muted small">Dirección</label>
+                            <p class="fw-bold">@Model.Address</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-gear me-2"></i>Acciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil-square me-1"></i>Editar Cliente
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Eliminar Cliente
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-info-square me-2"></i>Información de Cuenta
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">Usuario</label>
+                        <p class="fw-bold">@Model.UserName</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Email Confirmado</label>
+                        <p>
+                            @if (Model.EmailConfirmed)
+                            {
+                                <span class="badge bg-success">Sí</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">No</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

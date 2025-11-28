@@ -1,4 +1,4 @@
-namespace Firmeza.Application.DTOs;
+namespace Firmeza.Application.DTOs.Client;
 
 public class ClientDto
 {

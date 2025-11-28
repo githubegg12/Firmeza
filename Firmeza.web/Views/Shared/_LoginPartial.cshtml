@@ -1,4 +1,4 @@
-@using Firmeza.Identity.Entities
+@using Firmeza.Domain.Entities
 @using Microsoft.AspNetCore.Identity
 
 @* CORRECTED: Injected services now use the correct 'User' class from the Identity layer *@
@@ -20,9 +20,6 @@
 }
 else
 {
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
-    </li>
     <li class="nav-item">
         <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
     </li>
