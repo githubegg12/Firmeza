@@ -1,0 +1,26 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution and project files
+COPY ["Firmeza.sln", "./"]
+COPY ["Firmeza.API/Firmeza.API.csproj", "Firmeza.API/"]
+COPY ["Firmeza.Application/Firmeza.Application.csproj", "Firmeza.Application/"]
+COPY ["Firmeza.Domain/Firmeza.Domain.csproj", "Firmeza.Domain/"]
+COPY ["Firmeza.Infrastructure/Firmeza.Infrastructure.csproj", "Firmeza.Infrastructure/"]
+COPY ["Firmeza.Identity/Firmeza.Identity.csproj", "Firmeza.Identity/"]
+COPY ["Firmeza.web/Firmeza.web.csproj", "Firmeza.web/"]
+COPY ["Firmeza.Tests/Firmeza.Tests.csproj", "Firmeza.Tests/"]
+
+
+# Restore dependencies
+RUN dotnet restore
+
+# Copy the rest of the code
+COPY . .
+
+# Build the test project
+WORKDIR "/src/Firmeza.Tests"
+RUN dotnet build -c Release --no-restore
+
+# Run tests
+ENTRYPOINT ["dotnet", "test", "--logger:trx"]

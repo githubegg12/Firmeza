@@ -7,6 +7,9 @@ using Xunit;
 
 namespace Firmeza.Tests.Services;
 
+/// <summary>
+/// Unit tests for SaleService business logic
+/// </summary>
 public class SaleServiceTests
 {
     private readonly Mock<ISaleRepository> _mockRepository;
@@ -18,6 +21,9 @@ public class SaleServiceTests
         _service = new SaleService(_mockRepository.Object);
     }
 
+    /// <summary>
+    /// Verifies that CountAsync returns the correct number of sales
+    /// </summary>
     [Fact]
     public async Task CountAsync_ShouldReturnCorrectCount()
     {
@@ -38,6 +44,9 @@ public class SaleServiceTests
         Assert.Equal(2, result);
     }
 
+    /// <summary>
+    /// Verifies that GetTotalRevenueAsync calculates the correct sum
+    /// </summary>
     [Fact]
     public async Task GetTotalRevenueAsync_ShouldReturnSumOfTotalAmounts()
     {
@@ -58,6 +67,9 @@ public class SaleServiceTests
         Assert.Equal(300, result);
     }
 
+    /// <summary>
+    /// Verifies that GetProductRevenueReportAsync groups and aggregates data correctly
+    /// </summary>
     [Fact]
     public async Task GetProductRevenueReportAsync_ShouldReturnGroupedReport()
     {

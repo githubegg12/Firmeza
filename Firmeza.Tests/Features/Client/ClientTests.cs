@@ -4,8 +4,14 @@ using Xunit;
 
 namespace Firmeza.Tests.Features.Client;
 
+/// <summary>
+/// Unit tests for Client DTO validation
+/// </summary>
 public class ClientTests
 {
+    /// <summary>
+    /// Verifies that a valid DTO passes validation
+    /// </summary>
     [Fact]
     public void CreateClientDto_ShouldBeValid_WhenDataIsCorrect()
     {
@@ -30,6 +36,9 @@ public class ClientTests
         Assert.True(isValid);
     }
 
+    /// <summary>
+    /// Verifies that missing required fields cause validation failure
+    /// </summary>
     [Fact]
     public void CreateClientDto_ShouldBeInvalid_WhenRequiredFieldsAreMissing()
     {

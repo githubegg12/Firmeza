@@ -1,12 +1,12 @@
 namespace Firmeza.Identity.Configurations;
 
 /// <summary>
-/// Centraliza toda la configuración relacionada con ASP.NET Core Identity
+/// Centralizes all ASP.NET Core Identity configuration
 /// </summary>
 public static class IdentityOptions
 {
     /// <summary>
-    /// Configura las opciones de contraseña, SignIn y otros parámetros de Identity
+    /// Configures password options, SignIn settings, and other Identity parameters
     /// </summary>
     public static void ConfigurePasswordOptions(Microsoft.AspNetCore.Identity.IdentityOptions options)
     {

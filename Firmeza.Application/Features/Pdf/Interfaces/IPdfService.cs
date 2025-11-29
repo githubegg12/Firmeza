@@ -4,27 +4,27 @@ using SaleEntity = Firmeza.Domain.Entities.Sale;
 namespace Firmeza.Application.Features.Pdf.Interfaces;
 
 /// <summary>
-/// Interfaz para servicio de generación de PDFs
+/// Interface for PDF generation service
 /// </summary>
 public interface IPdfService
 {
     /// <summary>
-    /// Genera un PDF a partir de una venta
+    /// Generates a PDF for a specific sale
     /// </summary>
     Task<byte[]> GenerateSalePdfAsync(SaleEntity sale);
 
     /// <summary>
-    /// Genera un PDF a partir de un reporte
+    /// Generates a PDF from a report string content
     /// </summary>
     Task<byte[]> GenerateReportPdfAsync(string reportContent);
 
     /// <summary>
-    /// Genera un PDF con la lista de productos
+    /// Generates a PDF containing a list of products
     /// </summary>
     Task<byte[]> GenerateProductListPdfAsync(IEnumerable<Firmeza.Application.DTOs.ProductDto> products);
 
     /// <summary>
-    /// Genera un PDF con el reporte de ingresos
+    /// Generates a PDF containing a revenue report
     /// </summary>
     Task<byte[]> GenerateRevenueReportPdfAsync(IEnumerable<Firmeza.Application.DTOs.Sale.ProductRevenueDto> reportData);
 }
